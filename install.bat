@@ -1,9 +1,9 @@
 @echo off
 chcp 65001 >nul 2>nul
-title CodeF - Install
+title CodePaidie - Install
 echo.
 echo ========================================
-echo   CodeF - Install
+echo   CodePaidie - Install
 echo ========================================
 echo.
 

@@ -1,4 +1,4 @@
-# CodeF
+# CodePaidie
 
 > **Kill The Paid AI Coding Agent**
 
@@ -8,7 +8,7 @@ Turn ChatGPT, Gemini, Kimi, or any AI with custom tool support into a free local
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
-**Author: IMFF BIAS**
+**Author: CLYiX**
 
 ## Why This Exists
 
@@ -18,7 +18,7 @@ Codex quota is limited. MCP requires Business/Enterprise. DevSpace ([Waishnav/de
 
 Best suited for platforms where web quota is separate from coding quota (e.g. ChatGPT Plus, Gemini). Not beneficial for platforms where quotas are shared (e.g. Claude).
 
-| | CodeF | Codex | DevSpace |
+| | CodePaidie | Codex | DevSpace |
 |--|:--:|:--:|:--:|
 | **Platform support** | Any with tool calling | OpenAI only | ChatGPT (MCP) |
 | **Subscription** | Any tier | Pro / API | Business/Enterprise |
@@ -46,8 +46,8 @@ ChatGPT (Web / Mobile)
 ### 1. Install
 
 ```bash
-git clone https://github.com/IMFF-BIAS/CodeF.git
-cd CodeF
+git clone https://github.com/CLYiX/CodePaidie.git
+cd CodePaidie
 pip install -r requirements.txt
 ```
 
@@ -158,7 +158,7 @@ Open `http://localhost:8000` for:
 ## Project Structure
 
 ```
-CodeF/
+CodePaidie/
   server.py           # FastAPI backend
   run.py              # Entry point
   start.bat           # One-click start (server + ngrok)
@@ -203,7 +203,7 @@ A: Any platform that supports custom tool calling / actions / function calling. 
 - **Kimi** — Custom tools
 - Any Chinese/ international platform with tool support (通义, 文心, DeepSeek, etc.)
 
-If the platform lets you define external APIs for the AI to call, it works with CodeF.
+If the platform lets you define external APIs for the AI to call, it works with CodePaidie.
 
 **Q: Are there platforms where this doesn't help?**
 A: Yes. Claude shares web and code quotas, so there's no advantage. Platforms with unlimited or separate coding quotas benefit most.

@@ -1,9 +1,9 @@
 @echo off
 chcp 65001 >nul 2>nul
-title CodeF
+title CodePaidie
 echo.
 echo ========================================
-echo   CodeF
+echo   CodePaidie
 echo ========================================
 echo.
 
@@ -27,7 +27,7 @@ if %errorlevel% neq 0 (
 :: Start server
 echo [1/2] Starting server...
 cd /d "%~dp0"
-start "CodeF" /min python run.py
+start "CodePaidie" /min python run.py
 timeout /t 2 /nobreak >nul
 
 :: Read config and build ngrok command

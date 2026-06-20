@@ -12,7 +12,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.security import APIKeyHeader
 from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI(title="CodeF")
+app = FastAPI(title="CodePaidie")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 CONFIG_FILE = Path(__file__).parent / "config.json"
