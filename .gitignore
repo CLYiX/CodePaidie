@@ -7,3 +7,4 @@ workspace/
 dist/
 build/
 .claude/
+*.zip
