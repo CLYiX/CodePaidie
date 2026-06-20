@@ -4,8 +4,8 @@
 
 Turn ChatGPT, Gemini, Kimi, or any AI with custom tool support into a free local coding environment. Read, write, search, and execute files on your machine — no Codex, no MCP, no extra fees.
 
-[![Python](https://img.shields.io/badge/Python-3.10+-blue?logo=python\&logoColor=white)](https://python.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi\&logoColor=white)](https://fastapi.tiangolo.com)
+[![Python](https://img.shields.io/badge/Python-3.10+-blue?logo=python&logoColor=white)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
 **Author: CLYiX**
@@ -36,7 +36,7 @@ DevSpace is a great project. CodePaidie is another experiment in the same storm.
 
 So here it is — open source.
 
-Let’s build local AI coding tools together. Let’s make them cheaper, simpler, more open, and maybe a little crazy.
+Let's build local AI coding tools together. Let's make them cheaper, simpler, more open, and maybe a little crazy.
 
 |                       |       CodePaidie      |    Codex    |       DevSpace      |
 | --------------------- | :-------------------: | :---------: | :-----------------: |
@@ -183,30 +183,41 @@ Rules:
 
 Open `http://localhost:8000` for:
 
-* **File Browser** — Navigate projects, drag-and-drop upload
-* **Project Management** — Add/remove projects and directories
-* **Settings** — API key, extensions, size limits
-* **OpenAPI Schema** — Copy-paste for Custom GPT setup
+- **File Browser** — Navigate projects, drag-and-drop upload
+- **Project Management** — Add/remove projects and directories
+- **Settings** — API key, extensions, size limits
+- **OpenAPI Schema** — Copy-paste for Custom GPT setup
 
-## Security
+## Security & Sandbox
 
-CodePaidie gives AI tools access to your local projects. Use it carefully.
+CodePaidie gives AI tools access to your local projects. Security is not an afterthought — it's baked into every layer.
 
-Current security features:
+### Sandbox Isolation
 
-* **Project isolation** — Each project is sandboxed, no cross-project access
-* **API key auth** — Random 32-char token, 401 on missing/invalid key
-* **Extension whitelist** — Optionally restrict file types (empty = allow all)
-* **Size limits** — Configurable read/write limits (0 = unlimited)
-* **Path traversal protection** — `safe_path()` validates paths stay within project dirs
+- **Per-project sandboxes** — Each project is a separate isolated scope. AI working on Project A cannot touch Project B, period.
+- **Path traversal protection** — `safe_path()` validates every request. Even if the AI tries `../../etc/passwd`, it stays locked inside the sandbox.
+- **No cross-project leakage** — Connections between projects are explicit and opt-in. By default, every project is fully isolated.
 
-Recommended usage:
+### Access Control
 
-* Only add project directories you trust
-* Do not expose sensitive folders
-* Do not store secrets, API keys, wallets, or private credentials inside enabled projects
-* Stop the tunnel when you are not using it
-* Treat every connected AI platform as a coding partner with local machine access
+- **API key auth** — Random 32-character token, auto-generated on first run. 401 on missing or invalid key.
+- **Extension whitelist** — Restrict which file types the AI can touch. Block `.env`, `.key`, `.pem` — or allow everything if you trust the sandbox.
+- **Size limits** — Configurable read/write limits per request. Prevent runaway AI from eating your disk. Set to 0 for unlimited.
+- **Directory picker** — Choose exactly which folders to expose. No accidental access to sensitive paths.
+
+### Network Security
+
+- **ngrok basic auth** (optional) — Add username/password to the tunnel so strangers can't reach your server.
+- **Localhost by default** — Server binds to `127.0.0.1`. Without a tunnel, it's invisible to the network.
+- **No telemetry, no external calls** — CodePaidie never phones home. Your code stays on your machine.
+
+### Recommended Usage
+
+- Only add project directories you trust
+- Do not expose sensitive folders
+- Do not store secrets, API keys, wallets, or private credentials inside enabled projects
+- Stop the tunnel when you are not using it
+- Treat every connected AI platform as a coding partner with local machine access
 
 ## Project Structure
 
@@ -260,10 +271,10 @@ A: MCP support in ChatGPT requires Business/Enterprise/Edu subscriptions. DevSpa
 
 A: Any platform that supports custom tool calling / actions / function calling. Tested and confirmed:
 
-* **ChatGPT** — Custom GPT Actions (Plus or higher)
-* **Gemini** — Function calling
-* **Kimi** — Custom tools
-* Any Chinese/international platform with tool support (通义, 文心, DeepSeek, etc.)
+- **ChatGPT** — Custom GPT Actions (Plus or higher)
+- **Gemini** — Function calling
+- **Kimi** — Custom tools
+- Any Chinese/international platform with tool support (通义, 文心, DeepSeek, etc.)
 
 If the platform lets you define external APIs for the AI to call, it works with CodePaidie.
 

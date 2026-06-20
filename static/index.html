@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ChatGPT 本地桥接</title>
+<title>CodePaidie</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif; background: #0f0f0f; color: #e0e0e0; min-height: 100vh; }
@@ -67,90 +67,93 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft Ya
 <body>
 
 <div class="header">
-  <h1>ChatGPT 本地桥接</h1>
-  <span class="status" id="statusBadge">运行中</span>
+  <h1>CodePaidie</h1>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <span class="status" id="statusBadge">Running</span>
+    <button class="btn btn-sm" style="background:#333;color:#aaa;border:1px solid #555;" onclick="toggleLang()" id="langBtn">中文</button>
+  </div>
 </div>
 
 <div class="container">
   <div class="tabs">
-    <div class="tab active" data-tab="files">文件管理</div>
-    <div class="tab" data-tab="sandboxes">沙箱管理</div>
-    <div class="tab" data-tab="settings">设置</div>
-    <div class="tab" data-tab="openapi">OpenAPI 接口</div>
-    <div class="tab" data-tab="guide">配置教程</div>
+    <div class="tab active" data-tab="files" data-i18n="files">文件管理</div>
+    <div class="tab" data-tab="sandboxes" data-i18n="projects">沙箱管理</div>
+    <div class="tab" data-tab="settings" data-i18n="settings">设置</div>
+    <div class="tab" data-tab="openapi" data-i18n="openapi">OpenAPI 接口</div>
+    <div class="tab" data-tab="guide" data-i18n="guide">配置教程</div>
   </div>
 
   <!-- 文件管理 -->
   <div class="panel active" id="panel-files">
     <div class="card">
       <div class="card-title" style="display:flex; align-items:center; justify-content:space-between;">
-        <span>沙箱文件</span>
+        <span data-i18n="projectFiles">沙箱文件</span>
         <div style="display:flex; gap:8px; align-items:center;">
           <input type="file" id="uploadInput" multiple style="display:none;" onchange="uploadFiles()">
-          <button class="btn btn-sm btn-primary" onclick="document.getElementById('uploadInput').click()">选择上传</button>
-          <span id="uploadPathDisplay" style="color:#666; font-size:12px;">上传到: 根目录</span>
+          <button class="btn btn-sm btn-primary" onclick="document.getElementById('uploadInput').click()" data-i18n="uploadBtn">选择上传</button>
+          <span id="uploadPathDisplay" style="color:#666; font-size:12px;"></span>
         </div>
       </div>
       <div id="dropZone" style="min-height:200px; border:2px dashed transparent; border-radius:6px; transition: all 0.2s;">
-        <div id="fileBrowser" class="file-tree">加载中...</div>
+        <div id="fileBrowser" class="file-tree" data-i18n="dirEmpty">加载中...</div>
       </div>
-      <div id="dropHint" style="display:none; text-align:center; padding:40px; color:#60a5fa; font-size:14px;">松开鼠标上传文件</div>
+      <div id="dropHint" style="display:none; text-align:center; padding:40px; color:#60a5fa; font-size:14px;" data-i18n="dropHint">松开鼠标上传文件</div>
     </div>
   </div>
 
   <!-- 沙箱管理 -->
   <div class="panel" id="panel-sandboxes">
     <div class="card">
-      <div class="card-title">项目管理</div>
+      <div class="card-title" data-i18n="projects">项目管理</div>
       <div id="sandboxList"></div>
       <div style="margin-top:12px; display:flex; gap:8px; align-items:center;">
-        <input type="text" id="newSandboxName" placeholder="项目名称" style="width:120px;">
-        <button class="btn btn-sm btn-primary" onclick="openPicker()">选择目录</button>
-        <span id="newSandboxPathDisplay" style="color:#666; font-size:13px; flex:1;">未选择</span>
-        <button class="btn btn-sm btn-primary" onclick="addSandbox()">添加项目</button>
+        <input type="text" id="newSandboxName" data-i18n="projectName" placeholder="项目名称" style="width:120px;">
+        <button class="btn btn-sm btn-primary" onclick="openPicker()" data-i18n="selectDir">选择目录</button>
+        <span id="newSandboxPathDisplay" style="color:#666; font-size:13px; flex:1;" data-i18n="notSelected">未选择</span>
+        <button class="btn btn-sm btn-primary" onclick="addSandbox()" data-i18n="addProject">添加项目</button>
       </div>
     </div>
     <div class="card">
-      <div class="card-title">互通关系</div>
-      <div class="hint" style="margin-bottom:12px;">勾选的项目之间可以互相读写，未勾选的项目互相隔离</div>
+      <div class="card-title" data-i18n="connections">互通关系</div>
+      <div class="hint" style="margin-bottom:12px;" data-i18n="connHint">勾选的项目之间可以互相读写，未勾选的项目互相隔离</div>
       <div id="connectionMatrix"></div>
-      <button class="btn btn-primary" style="margin-top:12px;" onclick="saveSandboxes()">保存设置</button>
+      <button class="btn btn-primary" style="margin-top:12px;" onclick="saveSandboxes()" data-i18n="save">保存设置</button>
     </div>
   </div>
 
   <!-- 设置 -->
   <div class="panel" id="panel-settings">
     <div class="card">
-      <div class="card-title">网络设置</div>
+      <div class="card-title" data-i18n="network">网络设置</div>
       <div class="form-group">
-        <label>公网地址 (ngrok/cloudflared)</label>
+        <label data-i18n="publicUrl">公网地址 (ngrok/cloudflared)</label>
         <input type="text" id="publicUrl" placeholder="https://abc123.ngrok-free.app">
-        <div class="hint">填入 ngrok 或 cloudflared 给你的 HTTPS 地址，用于生成 OpenAPI 接口</div>
+        <div class="hint" data-i18n="publicUrlHint">填入 ngrok 或 cloudflared 给你的 HTTPS 地址，用于生成 OpenAPI 接口</div>
       </div>
       <div class="form-group" style="display:flex; gap:16px;">
         <div style="flex:1">
-          <label>ngrok 用户名 (可选，加密码保护)</label>
-          <input type="text" id="ngrokUser" placeholder="留空=不启用">
+          <label data-i18n="ngrokUser">ngrok 用户名 (可选，加密码保护)</label>
+          <input type="text" id="ngrokUser" placeholder="ngrokPlaceholder" data-i18n-placeholder="ngrokPlaceholder">
         </div>
         <div style="flex:1">
-          <label>ngrok 密码</label>
-          <input type="password" id="ngrokPass" placeholder="留空=不启用">
+          <label data-i18n="ngrokPass">ngrok 密码</label>
+          <input type="password" id="ngrokPass" placeholder="ngrokPlaceholder" data-i18n-placeholder="ngrokPlaceholder">
         </div>
       </div>
-      <div class="hint" style="margin-top:-8px; margin-bottom:16px;">启用后访问隧道地址会弹出浏览器登录框，防止他人访问你的文件</div>
+      <div class="hint" style="margin-top:-8px; margin-bottom:16px;" data-i18n="ngrokHint">启用后访问隧道地址会弹出浏览器登录框，防止他人访问你的文件</div>
       <div class="form-group">
-        <label>允许的文件扩展名 (逗号分隔)</label>
+        <label data-i18n="extLabel">允许的文件扩展名 (逗号分隔)</label>
         <input type="text" id="allowedExts" placeholder=".py, .js, .ts, .json, .md">
         <div style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap;">
-          <button class="btn btn-sm" style="background:#222;color:#aaa;border:1px solid #444;" onclick="setExts('.txt,.md,.doc,.docx,.pdf,.rtf,.odt')">文档</button>
-          <button class="btn btn-sm" style="background:#222;color:#aaa;border:1px solid #444;" onclick="setExts('.csv,.xlsx,.xls,.json,.xml,.yaml,.yml,.toml')">数据</button>
-          <button class="btn btn-sm" style="background:#222;color:#aaa;border:1px solid #444;" onclick="setExts('.png,.jpg,.jpeg,.gif,.svg,.bmp,.webp,.ico')">图片</button>
-          <button class="btn btn-sm" style="background:#222;color:#aaa;border:1px solid #444;" onclick="setExts('')">不限格式</button>
+          <button class="btn btn-sm" style="background:#222;color:#aaa;border:1px solid #444;" onclick="setExts('.txt,.md,.doc,.docx,.pdf,.rtf,.odt')" data-i18n="docs">文档</button>
+          <button class="btn btn-sm" style="background:#222;color:#aaa;border:1px solid #444;" onclick="setExts('.csv,.xlsx,.xls,.json,.xml,.yaml,.yml,.toml')" data-i18n="data">数据</button>
+          <button class="btn btn-sm" style="background:#222;color:#aaa;border:1px solid #444;" onclick="setExts('.png,.jpg,.jpeg,.gif,.svg,.bmp,.webp,.ico')" data-i18n="images">图片</button>
+          <button class="btn btn-sm" style="background:#222;color:#aaa;border:1px solid #444;" onclick="setExts('')" data-i18n="allExts">不限格式</button>
         </div>
       </div>
       <div class="form-group">
         <label style="display:flex; align-items:center; gap:8px;">
-          <input type="checkbox" id="readLimited" onchange="toggleSize('read')" style="width:auto;"> 限制读取大小
+          <input type="checkbox" id="readLimited" onchange="toggleSize('read')" style="width:auto;"> <span data-i18n="readLimit">限制读取大小</span>
         </label>
         <div id="readSizeInputs" style="display:flex; gap:6px; margin-top:6px; opacity:0.3;">
           <input type="number" id="maxReadGB" value="0" min="0" style="width:70px;" placeholder="GB" disabled>
@@ -163,7 +166,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft Ya
       </div>
       <div class="form-group">
         <label style="display:flex; align-items:center; gap:8px;">
-          <input type="checkbox" id="writeLimited" onchange="toggleSize('write')" style="width:auto;"> 限制写入大小
+          <input type="checkbox" id="writeLimited" onchange="toggleSize('write')" style="width:auto;"> <span data-i18n="writeLimit">限制写入大小</span>
         </label>
         <div id="writeSizeInputs" style="display:flex; gap:6px; margin-top:6px; opacity:0.3;">
           <input type="number" id="maxWriteGB" value="0" min="0" style="width:70px;" placeholder="GB" disabled>
@@ -177,28 +180,28 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft Ya
     </div>
 
     <div class="card">
-      <div class="card-title">API 密钥</div>
+      <div class="card-title" data-i18n="apiKey">API 密钥</div>
       <div class="api-key-box">
         <input type="text" id="apiKeyDisplay" readonly>
-        <button class="btn btn-sm btn-primary" onclick="copyKey()">复制</button>
-        <button class="btn btn-sm btn-danger" onclick="regenerateKey()">重新生成</button>
+        <button class="btn btn-sm btn-primary" onclick="copyKey()" data-i18n="copy">复制</button>
+        <button class="btn btn-sm btn-danger" onclick="regenerateKey()" data-i18n="regen">重新生成</button>
       </div>
-      <div class="hint" style="margin-top:8px;">在 Custom GPT 的 Actions 认证中使用，Header 名称：<code>X-API-Key</code></div>
+      <div class="hint" style="margin-top:8px;"><span data-i18n="apiKeyHint">在 Custom GPT 的 Actions 认证中使用，Header 名称：</span><code>X-API-Key</code></div>
     </div>
 
-    <button class="btn btn-primary" onclick="saveSettings()">保存设置</button>
+    <button class="btn btn-primary" onclick="saveSettings()" data-i18n="save">保存设置</button>
   </div>
 
   <!-- OpenAPI -->
   <div class="panel" id="panel-openapi">
     <div class="card">
-      <div class="section-title">OpenAPI 接口定义 <span class="badge">用于 Custom GPT</span></div>
-      <p style="font-size:13px; color:#888; margin-bottom:12px;">复制下面的 JSON，粘贴到 ChatGPT Custom GPT 的 Actions 配置中。</p>
+      <div class="section-title"><span data-i18n="openapiTitle">OpenAPI 接口定义</span> <span class="badge" data-i18n="openapiBadge">用于 Custom GPT</span></div>
+      <p style="font-size:13px; color:#888; margin-bottom:12px;" data-i18n="openapiHint">复制下面的 JSON，粘贴到 ChatGPT Custom GPT 的 Actions 配置中。</p>
       <div class="openapi-box">
-        <pre id="openapiSchema">加载中...</pre>
+        <pre id="openapiSchema" data-i18n="loading">加载中...</pre>
       </div>
       <div class="copy-hint">
-        <button class="btn btn-sm btn-primary" onclick="copyOpenAPI()">复制接口定义</button>
+        <button class="btn btn-sm btn-primary" onclick="copyOpenAPI()" data-i18n="copySchema">复制接口定义</button>
       </div>
     </div>
   </div>
@@ -206,71 +209,71 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft Ya
   <!-- 配置教程 -->
   <div class="panel" id="panel-guide">
     <div class="card">
-      <div class="card-title">配置 ChatGPT Custom GPT</div>
+      <div class="card-title" data-i18n="guideTitle">配置 ChatGPT Custom GPT</div>
       <ol style="font-size:14px; line-height:2; padding-left:20px; color:#ccc;">
-        <li>启动本服务：<code style="background:#222;padding:2px 6px;border-radius:4px;">python server.py</code></li>
-        <li>启动内网穿透：<code style="background:#222;padding:2px 6px;border-radius:4px;">ngrok http 8000</code></li>
-        <li>复制 ngrok 给的 HTTPS 地址（如 <code style="background:#222;padding:2px 6px;border-radius:4px;">https://abc123.ngrok-free.app</code>）</li>
-        <li>回到本页"设置"，粘贴到"公网地址"栏</li>
-        <li>打开 <a href="https://chatgpt.com/gpts" target="_blank" style="color:#60a5fa;">chatgpt.com/gpts</a> -> 创建 GPT</li>
-        <li>在 <strong>Actions</strong> 部分，点击"创建新 Action"</li>
-        <li>粘贴"OpenAPI 接口"页的 JSON</li>
-        <li>认证方式选 <strong>API Key</strong>，类型选 <strong>Custom</strong>，Header 填 <code style="background:#222;padding:2px 6px;border-radius:4px;">X-API-Key</code></li>
-        <li>粘贴"设置"页的 API 密钥</li>
-        <li>保存，测试！</li>
+        <li><span data-i18n="step1">启动本服务：</span><code style="background:#222;padding:2px 6px;border-radius:4px;">python server.py</code></li>
+        <li><span data-i18n="step2">启动内网穿透：</span><code style="background:#222;padding:2px 6px;border-radius:4px;">ngrok http 8000</code></li>
+        <li><span data-i18n="step3">复制 ngrok 给的 HTTPS 地址（如</span> <code style="background:#222;padding:2px 6px;border-radius:4px;">https://abc123.ngrok-free.app</code>)</li>
+        <li data-i18n="step4">回到本页"设置"，粘贴到"公网地址"栏</li>
+        <li><span data-i18n="step5">打开</span> <a href="https://chatgpt.com/gpts" target="_blank" style="color:#60a5fa;">chatgpt.com/gpts</a> -> <span data-i18n="step5b">创建 GPT</span></li>
+        <li data-i18n="step6">在 Actions 部分，点击"创建新 Action"</li>
+        <li data-i18n="step7">粘贴"OpenAPI 接口"页的 JSON</li>
+        <li><span data-i18n="step8">认证方式选 API Key，类型选 Custom，Header 填</span> <code style="background:#222;padding:2px 6px;border-radius:4px;">X-API-Key</code></li>
+        <li data-i18n="step9">粘贴"设置"页的 API 密钥</li>
+        <li data-i18n="step10">保存，测试！</li>
       </ol>
     </div>
 
     <div class="card">
-      <div class="card-title">接口列表</div>
+      <div class="card-title" data-i18n="apiList">接口列表</div>
       <table style="width:100%; font-size:13px; border-collapse:collapse;">
         <tr style="border-bottom:1px solid #333;">
           <td style="padding:8px; color:#4ade80; font-family:monospace;">GET /api/read?path=...</td>
-          <td style="padding:8px; color:#888;">读取文件内容</td>
+          <td style="padding:8px; color:#888;" data-i18n="read">读取文件内容</td>
         </tr>
         <tr style="border-bottom:1px solid #333;">
           <td style="padding:8px; color:#60a5fa; font-family:monospace;">POST /api/write</td>
-          <td style="padding:8px; color:#888;">写入文件（请求体：{"path": "...", "content": "..."}）</td>
+          <td style="padding:8px; color:#888;" data-i18n="writeDesc">写入文件（请求体：{"path": "...", "content": "..."}）</td>
         </tr>
         <tr style="border-bottom:1px solid #333;">
           <td style="padding:8px; color:#4ade80; font-family:monospace;">GET /api/list?path=.</td>
-          <td style="padding:8px; color:#888;">列出目录内容</td>
+          <td style="padding:8px; color:#888;" data-i18n="listDir">列出目录内容</td>
         </tr>
         <tr style="border-bottom:1px solid #333;">
           <td style="padding:8px; color:#4ade80; font-family:monospace;">GET /api/tree?path=.</td>
-          <td style="padding:8px; color:#888;">获取目录树视图</td>
+          <td style="padding:8px; color:#888;" data-i18n="tree">获取目录树视图</td>
         </tr>
         <tr style="border-bottom:1px solid #333;">
           <td style="padding:8px; color:#f87171; font-family:monospace;">GET /api/delete?path=...</td>
-          <td style="padding:8px; color:#888;">删除文件或目录</td>
+          <td style="padding:8px; color:#888;" data-i18n="del">删除文件或目录</td>
         </tr>
         <tr style="border-bottom:1px solid #333;">
           <td style="padding:8px; color:#60a5fa; font-family:monospace;">GET /api/copy?source=...&dest=...</td>
-          <td style="padding:8px; color:#888;">复制文件或目录</td>
+          <td style="padding:8px; color:#888;" data-i18n="copyApi">复制文件或目录</td>
         </tr>
         <tr style="border-bottom:1px solid #333;">
           <td style="padding:8px; color:#60a5fa; font-family:monospace;">GET /api/move?source=...&dest=...</td>
-          <td style="padding:8px; color:#888;">移动或重命名</td>
+          <td style="padding:8px; color:#888;" data-i18n="move">移动或重命名</td>
         </tr>
         <tr style="border-bottom:1px solid #333;">
           <td style="padding:8px; color:#4ade80; font-family:monospace;">GET /api/mkdir?path=...</td>
-          <td style="padding:8px; color:#888;">创建目录</td>
+          <td style="padding:8px; color:#888;" data-i18n="mkdir">创建目录</td>
         </tr>
         <tr style="border-bottom:1px solid #333;">
           <td style="padding:8px; color:#4ade80; font-family:monospace;">GET /api/info?path=...</td>
-          <td style="padding:8px; color:#888;">文件信息（大小、时间等）</td>
+          <td style="padding:8px; color:#888;" data-i18n="info">文件信息（大小、时间等）</td>
         </tr>
         <tr style="border-bottom:1px solid #333;">
           <td style="padding:8px; color:#4ade80; font-family:monospace;">GET /api/search?query=...</td>
-          <td style="padding:8px; color:#888;">按文件名搜索</td>
+          <td style="padding:8px; color:#888;" data-i18n="search">按文件名搜索</td>
         </tr>
         <tr style="border-bottom:1px solid #333;">
           <td style="padding:8px; color:#4ade80; font-family:monospace;">GET /api/grep?query=...</td>
-          <td style="padding:8px; color:#888;">搜索文件内容</td>
+          <td style="padding:8px; color:#888;" data-i18n="grep">搜索文件内容</td>
         </tr>
         <tr>
           <td style="padding:8px; color:#f87171; font-family:monospace;">GET /api/exec?command=...</td>
-          <td style="padding:8px; color:#888;">执行命令（沙箱内）</td>
+          <td style="padding:8px; color:#888;" data-i18n="exec">执行命令（沙箱内）</td>
         </tr>
       </table>
     </div>
@@ -281,13 +284,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft Ya
 <div id="pickerModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:100; align-items:center; justify-content:center;">
   <div style="background:#1a1a1a; border:1px solid #333; border-radius:8px; width:500px; max-height:70vh; display:flex; flex-direction:column;">
     <div style="padding:12px 16px; border-bottom:1px solid #333; display:flex; align-items:center; justify-content:space-between;">
-      <span style="font-weight:600; font-size:14px;">选择目录</span>
-      <button class="btn btn-sm" style="background:#333; color:#aaa;" onclick="closePicker()">关闭</button>
+      <span style="font-weight:600; font-size:14px;" data-i18n="pickerTitle">选择目录</span>
+      <button class="btn btn-sm" style="background:#333; color:#aaa;" onclick="closePicker()" data-i18n="pickerClose">关闭</button>
     </div>
     <div id="pickerPath" style="padding:8px 16px; font-size:12px; color:#666; font-family:monospace; border-bottom:1px solid #222;"></div>
     <div id="pickerList" style="flex:1; overflow-y:auto; padding:8px 16px; font-size:13px;"></div>
     <div style="padding:12px 16px; border-top:1px solid #333; display:flex; gap:8px;">
-      <button class="btn btn-sm btn-primary" id="pickerUseBtn" onclick="usePickedDir()" disabled>使用此目录</button>
+      <button class="btn btn-sm btn-primary" id="pickerUseBtn" onclick="usePickedDir()" disabled data-i18n="pickerUse">使用此目录</button>
     </div>
   </div>
 </div>
@@ -296,6 +299,162 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft Ya
 
 <script>
 const API = '';
+
+// --- i18n ---
+let lang = localStorage.getItem('lang') || 'en';
+const I18N = {
+  zh: {
+    running: '运行中', files: '文件管理', projects: '项目管理', settings: '设置', openapi: 'OpenAPI 接口', guide: '配置教程',
+    projectFiles: '沙箱文件', uploadBtn: '选择上传', uploadTo: '上传到:', root: '根目录', dropHint: '松开鼠标上传文件',
+    addProject: '添加项目', projectName: '项目名称', selectDir: '选择目录', notSelected: '未选择',
+    connections: '互通关系', connHint: '勾选的项目之间可以互相读写，未勾选的项目互相隔离',
+    save: '保存设置', network: '网络设置', publicUrl: '公网地址 (ngrok/cloudflared)',
+    publicUrlHint: '填入 ngrok 或 cloudflared 给你的 HTTPS 地址，用于生成 OpenAPI 接口',
+    ngrokUser: 'ngrok 用户名 (可选，加密码保护)', ngrokPass: 'ngrok 密码', ngrokHint: '启用后访问隧道地址会弹出浏览器登录框，防止他人访问你的文件',
+    ngrokPlaceholder: '留空=不启用',
+    extLabel: '允许的文件扩展名 (逗号分隔)', docs: '文档', data: '数据', images: '图片', allExts: '不限格式',
+    readLimit: '限制读取大小', writeLimit: '限制写入大小',
+    apiKey: 'API 密钥', copy: '复制', regen: '重新生成', apiKeyHint: '在 Custom GPT 的 Actions 认证中使用，Header 名称：',
+    openapiTitle: 'OpenAPI 接口定义', openapiBadge: '用于 Custom GPT', openapiHint: '复制下面的 JSON，粘贴到 ChatGPT Custom GPT 的 Actions 配置中。',
+    copySchema: '复制接口定义', guideTitle: '配置 ChatGPT Custom GPT',
+    step1: '启动本服务：', step2: '启动内网穿透：', step3: '复制 ngrok 给的 HTTPS 地址（如',
+    step4: '回到本页"设置"，粘贴到"公网地址"栏', step5: '打开', step5b: '创建 GPT',
+    step6: '在 Actions 部分，点击"创建新 Action"', step7: '粘贴"OpenAPI 接口"页的 JSON',
+    step8: '认证方式选 API Key，类型选 Custom，Header 填', step9: '粘贴"设置"页的 API 密钥', step10: '保存，测试！',
+    apiList: '接口列表', read: '读取文件内容', writeDesc: '写入文件（请求体：{"path": "...", "content": "..."}）',
+    listDir: '列出目录内容', tree: '获取目录树视图',
+    del: '删除文件或目录', copyApi: '复制文件或目录', move: '移动或重命名', mkdir: '创建目录', info: '文件信息（大小、时间等）',
+    search: '按文件名搜索', grep: '搜索文件内容', exec: '执行命令（沙箱内）', loading: '加载中...',
+    dirEmpty: '空目录', loadFail: '加载失败', loadMore: '加载更多',
+    uploadDone: '上传完成：', uploadDoneN: '上传完成：', uploadFail: '上传完成：',
+    saved: '设置已保存', saveFail: '保存失败', keyCopied: '密钥已复制',
+    confirmRegen: '重新生成 API 密钥？你需要在 Custom GPT 中同步更新。',
+    keyRegened: 'API 密钥已重新生成', noProject: '暂无项目，添加一个开始',
+    addDir: '+ 添加目录', delProject: '删除项目', remove: '移除',
+    need2: '至少需要 2 个启用的沙箱才能设置互通',
+    enterName: '请填写项目名称', chooseDir: '请选择一个目录',
+    dirAdded: '目录已添加到项目 ', dirExists: '该目录已在项目中',
+    saved2: '沙箱设置已保存', pickerTitle: '选择目录', pickerClose: '关闭', pickerUse: '使用此目录',
+    emptyDir: '空目录或无权限', dirAddedTo: '目录已添加到 ',
+    confirm: '确认', apiCopied: '接口定义已复制',
+    writeFile: '写入文件', success: '成功', failed: '失败', files: '个文件',
+    apiTitle: 'ChatGPT 本地桥接', apiDesc: '路径格式: 项目名/相对路径。例如 default/src/main.py。先调 /api/roots 查看可用项目和目录。',
+    rootsSummary: '获取可用项目和根目录（必须先调此接口了解路径格式）',
+    rootsDesc: '项目列表，每个项目包含 project 名和 dirs 数组',
+    saveImgSummary: '保存 base64 图片到本地。生图后调此接口保存',
+    saveImgPathDesc: '路径格式: 项目名/文件名.png',
+    saveImgDataDesc: 'base64 编码的图片数据',
+    saveImgDesc: '保存结果，包含文件大小',
+    readSummary: '读取文件内容', readParamDesc: '路径格式: 项目名/相对路径，如 default/src/main.py',
+    readDesc: '文件内容',
+    writeSummary: '写入文件', writePathDesc: '路径格式: 项目名/相对路径', writeDesc2: '写入结果',
+    listSummary: '列出目录内容。传 \'.\' 返回所有项目列表',
+    listParamDesc: '传 \'.\' 返回项目列表，传 \'项目名/\' 返回项目下的文件',
+    listDesc: '文件/目录列表',
+    treeSummary: '获取目录树视图', treeParamDesc: '路径格式: 项目名/目录', treeDesc: '目录树',
+    delSummary: '删除文件或目录', delParamDesc: '路径格式: 项目名/相对路径', delDesc2: '删除结果',
+    copySummary: '复制文件或目录', srcDesc: '源路径: 项目名/相对路径', dstDesc: '目标路径: 项目名/相对路径',
+    copyDesc2: '复制结果',
+    moveSummary: '移动或重命名文件/目录', moveDesc: '移动结果',
+    mkdirSummary: '创建目录（支持多级）', mkdirDesc: '创建结果',
+    infoSummary: '获取文件信息（大小、修改时间等）', infoDesc: '文件信息',
+    searchSummary: '按文件名搜索', keywordDesc: '搜索关键词',
+    searchPathDesc: '路径格式: 项目名/目录，默认搜索全部', searchDesc: '搜索结果',
+    grepSummary: '搜索文件内容（类似 grep）',
+    grepExtDesc: '文件扩展名过滤，如 .py',
+    execSummary: '在项目目录内执行命令', execParamDesc: '要执行的命令',
+    execDesc: '执行结果（stdout/stderr/code）',
+  },
+  en: {
+    running: 'Running', files: 'Files', projects: 'Projects', settings: 'Settings', openapi: 'OpenAPI', guide: 'Guide',
+    projectFiles: 'Files', uploadBtn: 'Upload', uploadTo: 'Upload to:', root: 'Root', dropHint: 'Drop files here to upload',
+    addProject: 'Add Project', projectName: 'Project Name', selectDir: 'Select Directory', notSelected: 'Not selected',
+    connections: 'Connections', connHint: 'Checked projects can read/write each other. Unchecked projects are isolated.',
+    save: 'Save Settings', network: 'Network', publicUrl: 'Public URL (ngrok/cloudflared)',
+    publicUrlHint: 'Paste your ngrok/cloudflared HTTPS URL for OpenAPI schema generation',
+    ngrokUser: 'ngrok Username (optional, adds auth)', ngrokPass: 'ngrok Password', ngrokHint: 'When enabled, tunnel URL prompts for login to prevent unauthorized access',
+    ngrokPlaceholder: 'Leave empty to disable',
+    extLabel: 'Allowed file extensions (comma separated)', docs: 'Docs', data: 'Data', images: 'Images', allExts: 'All',
+    readLimit: 'Limit read size', writeLimit: 'Limit write size',
+    apiKey: 'API Key', copy: 'Copy', regen: 'Regenerate', apiKeyHint: 'Use in Custom GPT Actions auth. Header name: ',
+    openapiTitle: 'OpenAPI Schema', openapiBadge: 'For Custom GPT', openapiHint: 'Copy the JSON below and paste into your ChatGPT Custom GPT Actions config.',
+    copySchema: 'Copy Schema', guideTitle: 'Configure ChatGPT Custom GPT',
+    step1: 'Start the server: ', step2: 'Start tunnel: ', step3: 'Copy the ngrok HTTPS URL (e.g. ',
+    step4: 'Go back to Settings, paste into Public URL field', step5: 'Open ', step5b: 'Create a GPT',
+    step6: 'In Actions section, click "Create new Action"', step7: 'Paste the OpenAPI JSON',
+    step8: 'Auth type: API Key, Provider: Custom, Header: ', step9: 'Paste the API key from Settings', step10: 'Save and test!',
+    apiList: 'API Reference', read: 'Read file', writeDesc: 'Write file (body: {"path": "...", "content": "..."}',
+    listDir: 'List directory', tree: 'Directory tree',
+    del: 'Delete file/directory', copyApi: 'Copy file/directory', move: 'Move/rename', mkdir: 'Create directory', info: 'File info (size, time, etc.)',
+    search: 'Search by filename', grep: 'Search file contents', exec: 'Execute command (shell)', loading: 'Loading...',
+    dirEmpty: 'Empty directory', loadFail: 'Failed to load', loadMore: 'Load more',
+    uploadDone: 'Upload done: ', uploadDoneN: 'Uploaded: ', uploadFail: 'Upload done: ',
+    saved: 'Settings saved', saveFail: 'Save failed', keyCopied: 'Key copied',
+    confirmRegen: 'Regenerate API key? You need to update it in your Custom GPT too.',
+    keyRegened: 'API key regenerated', noProject: 'No projects yet. Add one to start.',
+    addDir: '+ Add dir', delProject: 'Delete', remove: 'Remove',
+    need2: 'At least 2 enabled projects needed for connections',
+    enterName: 'Enter project name', chooseDir: 'Select a directory',
+    dirAdded: 'Directory added to project ', dirExists: 'Directory already in project',
+    saved2: 'Projects saved', pickerTitle: 'Select Directory', pickerClose: 'Close', pickerUse: 'Use this directory',
+    emptyDir: 'Empty or no permission', dirAddedTo: 'Directory added to ',
+    confirm: 'OK', apiCopied: 'Schema copied',
+    writeFile: 'Write file', success: 'ok', failed: 'failed', files: 'files',
+    apiTitle: 'ChatGPT Local Bridge', apiDesc: 'Path format: project_name/relative_path. E.g. default/src/main.py. Call /api/roots first to discover projects.',
+    rootsSummary: 'Get available projects and root dirs (call this first to learn the path format)',
+    rootsDesc: 'Project list, each contains project name and dirs array',
+    saveImgSummary: 'Save base64 image to local file. Call after generating an image',
+    saveImgPathDesc: 'Path format: project_name/filename.png',
+    saveImgDataDesc: 'Base64 encoded image data',
+    saveImgDesc: 'Save result, includes file size',
+    readSummary: 'Read file content', readParamDesc: 'Path format: project_name/relative_path, e.g. default/src/main.py',
+    readDesc: 'File content',
+    writeSummary: 'Write file', writePathDesc: 'Path format: project_name/relative_path', writeDesc2: 'Write result',
+    listSummary: "List directory contents. Pass '.' for all projects",
+    listParamDesc: "Pass '.' for project list, pass 'project_name/' for project files",
+    listDesc: 'File/directory list',
+    treeSummary: 'Get directory tree view', treeParamDesc: 'Path format: project_name/directory', treeDesc: 'Directory tree',
+    delSummary: 'Delete file or directory', delParamDesc: 'Path format: project_name/relative_path', delDesc2: 'Delete result',
+    copySummary: 'Copy file or directory', srcDesc: 'Source path: project_name/relative_path', dstDesc: 'Dest path: project_name/relative_path',
+    copyDesc2: 'Copy result',
+    moveSummary: 'Move or rename file/directory', moveDesc: 'Move result',
+    mkdirSummary: 'Create directory (supports nested)', mkdirDesc: 'Create result',
+    infoSummary: 'Get file info (size, modified time, etc.)', infoDesc: 'File info',
+    searchSummary: 'Search by filename', keywordDesc: 'Search keyword',
+    searchPathDesc: 'Path format: project_name/directory, default: all', searchDesc: 'Search results',
+    grepSummary: 'Search file contents (like grep)',
+    grepExtDesc: 'File extension filter, e.g. .py',
+    execSummary: 'Execute command in project directory', execParamDesc: 'Command to execute',
+    execDesc: 'Execution result (stdout/stderr/code)',
+  }
+};
+function t(key) { return (I18N[lang] || I18N.en)[key] || key; }
+function applyLang() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.dataset.i18n;
+    if (el.tagName === 'INPUT' && el.type !== 'checkbox') el.placeholder = t(key);
+    else el.textContent = t(key);
+  });
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    el.title = t(el.dataset.i18nTitle);
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    el.placeholder = t(el.dataset.i18nPlaceholder);
+  });
+  document.getElementById('langBtn').textContent = lang === 'zh' ? '中文' : 'English';
+  document.getElementById('statusBadge').textContent = t('running');
+}
+function toggleLang() {
+  lang = lang === 'zh' ? 'en' : 'zh';
+  localStorage.setItem('lang', lang);
+  document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+  applyLang();
+  // Re-render dynamic content
+  if (typeof renderSandboxes === 'function') renderSandboxes();
+  loadFiles(currentBrowsePath);
+  loadOpenAPI();
+}
+applyLang();
 
 document.querySelectorAll('.tab').forEach(tab => {
   tab.addEventListener('click', () => {
@@ -359,7 +518,7 @@ async function loadSandboxes() {
 function renderSandboxes() {
   const list = document.getElementById('sandboxList');
   if (!sandboxData.sandboxes.length) {
-    list.innerHTML = '<div style="color:#666; font-size:13px;">暂无项目，添加一个开始</div>';
+    list.innerHTML = `<div style="color:#666; font-size:13px;">${t('noProject')}</div>`;
     document.getElementById('connectionMatrix').innerHTML = '';
     return;
   }
@@ -367,7 +526,7 @@ function renderSandboxes() {
     const dirs = (s.dirs || []).map((d, di) => `
       <div style="display:flex; align-items:center; gap:6px; padding:4px 0 4px 28px; font-size:12px;">
         <span style="color:#666; font-family:monospace; flex:1;">${escHtml(d)}</span>
-        <button class="btn btn-sm btn-danger" onclick="removeDir(${i},${di})" style="padding:2px 6px;">移除</button>
+        <button class="btn btn-sm btn-danger" onclick="removeDir(${i},${di})" style="padding:2px 6px;">${t('remove')}</button>
       </div>
     `).join('');
     return `
@@ -375,8 +534,8 @@ function renderSandboxes() {
       <div style="display:flex; align-items:center; gap:8px;">
         <input type="checkbox" ${s.enabled !== false ? 'checked' : ''} onchange="sandboxData.sandboxes[${i}].enabled=this.checked" style="width:auto;">
         <span style="font-weight:600; min-width:80px;">${escHtml(s.name)}</span>
-        <button class="btn btn-sm btn-primary" onclick="openPickerForProject(${i})" style="font-size:11px;">+ 添加目录</button>
-        <button class="btn btn-sm btn-danger" onclick="removeProject(${i})" style="margin-left:auto;">删除项目</button>
+        <button class="btn btn-sm btn-primary" onclick="openPickerForProject(${i})" style="font-size:11px;">${t('addDir')}</button>
+        <button class="btn btn-sm btn-danger" onclick="removeProject(${i})" style="margin-left:auto;">${t('delProject')}</button>
       </div>
       ${dirs}
     </div>`;
@@ -387,7 +546,7 @@ function renderSandboxes() {
 function renderConnections() {
   const names = sandboxData.sandboxes.filter(s => s.enabled).map(s => s.name);
   if (names.length < 2) {
-    document.getElementById('connectionMatrix').innerHTML = '<div style="color:#666; font-size:13px;">至少需要 2 个启用的沙箱才能设置互通</div>';
+    document.getElementById('connectionMatrix').innerHTML = `<div style="color:#666; font-size:13px;">${t('need2')}</div>`;
     return;
   }
   let html = '<table style="width:100%; font-size:13px; border-collapse:collapse;">';
@@ -424,23 +583,23 @@ function toggleConnection(a, b, checked) {
 function addSandbox() {
   const name = document.getElementById('newSandboxName').value.trim();
   const path = document.getElementById('newSandboxPathDisplay').dataset.path;
-  if (!name) { toast('请填写项目名称', true); return; }
-  if (!path) { toast('请选择一个目录', true); return; }
+  if (!name) { toast(t('enterName'), true); return; }
+  if (!path) { toast(t('chooseDir'), true); return; }
   // 查找是否已有同名项目
   const existing = sandboxData.sandboxes.find(s => s.name === name);
   if (existing) {
     if (!existing.dirs.includes(path)) {
       existing.dirs.push(path);
-      toast('目录已添加到项目 ' + name);
+      toast(t('dirAdded') + name);
     } else {
-      toast('该目录已在项目中', true);
+      toast(t('dirExists'), true);
       return;
     }
   } else {
     sandboxData.sandboxes.push({ name, dirs: [path], enabled: true });
   }
   document.getElementById('newSandboxName').value = '';
-  document.getElementById('newSandboxPathDisplay').textContent = '未选择';
+  document.getElementById('newSandboxPathDisplay').textContent = t('notSelected');
   document.getElementById('newSandboxPathDisplay').dataset.path = '';
   renderSandboxes();
 }
@@ -475,8 +634,8 @@ async function saveSandboxes() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(sandboxData),
   });
-  if (resp.ok) { toast('沙箱设置已保存'); loadFiles(); }
-  else { toast('保存失败', true); }
+  if (resp.ok) { toast(t('saved2')); loadFiles(); }
+  else { toast(t('saveFail'), true); }
 }
 
 // --- 目录选择器 ---
@@ -513,7 +672,7 @@ async function browseTo(path) {
   for (const item of data.items) {
     html += `<div class="picker-item" data-path="${escHtml(item.path)}" style="padding:4px 0; cursor:pointer; color:#a3a3a3;">${escHtml(item.name)}/</div>`;
   }
-  document.getElementById('pickerList').innerHTML = html || '<div style="color:#666;">空目录或无权限</div>';
+  document.getElementById('pickerList').innerHTML = html || `<div style="color:#666;">${t('emptyDir')}</div>`;
 
   pickerSelectedPath = data.path;
   document.getElementById('pickerUseBtn').disabled = false;
@@ -524,10 +683,10 @@ function usePickedDir() {
     const s = sandboxData.sandboxes[pickerTargetProject];
     if (!s.dirs.includes(pickerSelectedPath)) {
       s.dirs.push(pickerSelectedPath);
-      toast('目录已添加到 ' + s.name);
+      toast(t('dirAddedTo') + s.name);
       renderSandboxes();
     } else {
-      toast('该目录已在项目中', true);
+      toast(t('dirExists'), true);
     }
     pickerTargetProject = -1;
   } else {
@@ -579,28 +738,28 @@ async function saveSettings() {
     body: JSON.stringify(body),
   });
   if (resp.ok) {
-    toast('设置已保存');
+    toast(t('saved'));
     loadFiles();
     loadOpenAPI();
   } else {
-    toast('保存失败', true);
+    toast(t('saveFail'), true);
   }
 }
 
 async function regenerateKey() {
-  if (!confirm('重新生成 API 密钥？你需要在 Custom GPT 中同步更新。')) return;
+  if (!confirm(t('confirmRegen'))) return;
   await fetch(API + '/api/config', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ regenerate_key: true }),
   });
   loadSettings();
-  toast('API 密钥已重新生成');
+  toast(t('keyRegened'));
 }
 
 function copyKey() {
   navigator.clipboard.writeText(document.getElementById('apiKeyDisplay').value);
-  toast('密钥已复制');
+  toast(t('keyCopied'));
 }
 
 // 文件浏览器
@@ -610,7 +769,7 @@ const PAGE_SIZE = 200;
 
 async function loadFiles(path = '.', append = false) {
   currentBrowsePath = path;
-  document.getElementById('uploadPathDisplay').textContent = '上传到: ' + (path === '.' ? '根目录' : path);
+  document.getElementById('uploadPathDisplay').textContent = t('uploadTo') + ' ' + (path === '.' ? t('root') : path);
   const browser = document.getElementById('fileBrowser');
   try {
     const cfg = await getConfig();
@@ -638,17 +797,17 @@ async function loadFiles(path = '.', append = false) {
         if (oldBtn) oldBtn.remove();
         browser.insertAdjacentHTML('beforeend', html);
       } else {
-        browser.innerHTML = html || '<div style="color:#666">空目录</div>';
+        browser.innerHTML = html || `<div style="color:#666">${t('dirEmpty')}</div>`;
       }
       // 如果还有更多，显示"加载更多"
       const loaded = (append ? offset : 0) + data.items.length;
       if (data.total > loaded) {
         browser.insertAdjacentHTML('beforeend',
-          `<div class="load-more" style="text-align:center;padding:8px;color:#4ade80;cursor:pointer;" onclick="loadFiles('${escHtml(path)}', true)">加载更多 (${loaded}/${data.total})</div>`);
+          `<div class="load-more" style="text-align:center;padding:8px;color:#4ade80;cursor:pointer;" onclick="loadFiles('${escHtml(path)}', true)">${t('loadMore')} (${loaded}/${data.total})</div>`);
       }
     }
   } catch (e) {
-    browser.innerHTML = '<div style="color:#f87171">加载失败</div>';
+    browser.innerHTML = `<div style="color:#f87171">${t('loadFail')}</div>`;
   }
 }
 
@@ -686,7 +845,7 @@ async function uploadFiles() {
     if (resp.ok) ok++; else fail++;
   }
   input.value = '';
-  toast(fail ? `上传完成：${ok} 成功，${fail} 失败` : `上传完成：${ok} 个文件`);
+  toast(fail ? `${t('uploadDone')}${ok} ${t('success')}, ${fail} ${t('failed')}` : `${t('uploadDone')}${ok} ${t('files')}`);
   loadFiles(currentBrowsePath);
 }
 
@@ -732,7 +891,7 @@ dropZone.addEventListener('drop', async e => {
     });
     if (resp.ok) ok++; else fail++;
   }
-  toast(fail ? `上传完成：${ok} 成功，${fail} 失败` : `上传完成：${ok} 个文件`);
+  toast(fail ? `${t('uploadDone')}${ok} ${t('success')}, ${fail} ${t('failed')}` : `${t('uploadDone')}${ok} ${t('files')}`);
   loadFiles(currentBrowsePath);
 });
 
@@ -747,142 +906,142 @@ async function loadOpenAPI() {
   const schema = {
     openapi: "3.1.0",
     info: {
-      title: "ChatGPT 本地桥接",
+      title: t('apiTitle'),
       version: "1.0.0",
-      description: "路径格式: 项目名/相对路径。例如 default/src/main.py。先调 /api/roots 查看可用项目和目录。"
+      description: t('apiDesc')
     },
     servers: [{ url: serverUrl }],
     paths: {
       "/api/roots": {
         get: {
           operationId: "getProjectRoots",
-          summary: "获取可用项目和根目录（必须先调此接口了解路径格式）",
-          responses: { "200": { description: "项目列表，每个项目包含 project 名和 dirs 数组" } }
+          summary: t('rootsSummary'),
+          responses: { "200": { description: t('rootsDesc') } }
         }
       },
       "/api/save-image": {
         post: {
           operationId: "saveImage",
-          summary: "保存 base64 图片到本地。生图后调此接口保存",
+          summary: t('saveImgSummary'),
           requestBody: {
             required: true,
-            content: { "application/json": { schema: { type: "object", properties: { path: { type: "string", description: "路径格式: 项目名/文件名.png" }, image_data: { type: "string", description: "base64 编码的图片数据" } }, required: ["path", "image_data"] } } }
+            content: { "application/json": { schema: { type: "object", properties: { path: { type: "string", description: t('saveImgPathDesc') }, image_data: { type: "string", description: t('saveImgDataDesc') } }, required: ["path", "image_data"] } } }
           },
-          responses: { "200": { description: "保存结果，包含文件大小" } }
+          responses: { "200": { description: t('saveImgDesc') } }
         }
       },
       "/api/read": {
         get: {
           operationId: "readFile",
-          summary: "读取文件内容",
-          parameters: [{ name: "path", in: "query", required: true, schema: { type: "string" }, description: "路径格式: 项目名/相对路径，如 default/src/main.py" }],
-          responses: { "200": { description: "文件内容" } }
+          summary: t('readSummary'),
+          parameters: [{ name: "path", in: "query", required: true, schema: { type: "string" }, description: t('readParamDesc') }],
+          responses: { "200": { description: t('readDesc') } }
         }
       },
       "/api/write": {
         post: {
           operationId: "writeFile",
-          summary: "写入文件",
+          summary: t('writeSummary'),
           requestBody: {
             required: true,
-            content: { "application/json": { schema: { type: "object", properties: { path: { type: "string", description: "路径格式: 项目名/相对路径" }, content: { type: "string" } }, required: ["path", "content"] } } }
+            content: { "application/json": { schema: { type: "object", properties: { path: { type: "string", description: t('writePathDesc') }, content: { type: "string" } }, required: ["path", "content"] } } }
           },
-          responses: { "200": { description: "写入结果" } }
+          responses: { "200": { description: t('writeDesc2') } }
         }
       },
       "/api/list": {
         get: {
           operationId: "listFiles",
-          summary: "列出目录内容。传 '.' 返回所有项目列表",
-          parameters: [{ name: "path", in: "query", schema: { type: "string", default: "." }, description: "传 '.' 返回项目列表，传 '项目名/' 返回项目下的文件" }],
-          responses: { "200": { description: "文件/目录列表" } }
+          summary: t('listSummary'),
+          parameters: [{ name: "path", in: "query", schema: { type: "string", default: "." }, description: t('listParamDesc') }],
+          responses: { "200": { description: t('listDesc') } }
         }
       },
       "/api/tree": {
         get: {
           operationId: "getTree",
-          summary: "获取目录树视图",
-          parameters: [{ name: "path", in: "query", schema: { type: "string", default: "." }, description: "路径格式: 项目名/目录" }],
-          responses: { "200": { description: "目录树" } }
+          summary: t('treeSummary'),
+          parameters: [{ name: "path", in: "query", schema: { type: "string", default: "." }, description: t('treeParamDesc') }],
+          responses: { "200": { description: t('treeDesc') } }
         }
       },
       "/api/delete": {
         get: {
           operationId: "deleteFile",
-          summary: "删除文件或目录",
-          parameters: [{ name: "path", in: "query", required: true, schema: { type: "string" }, description: "路径格式: 项目名/相对路径" }],
-          responses: { "200": { description: "删除结果" } }
+          summary: t('delSummary'),
+          parameters: [{ name: "path", in: "query", required: true, schema: { type: "string" }, description: t('delParamDesc') }],
+          responses: { "200": { description: t('delDesc2') } }
         }
       },
       "/api/copy": {
         get: {
           operationId: "copyFile",
-          summary: "复制文件或目录",
+          summary: t('copySummary'),
           parameters: [
-            { name: "source", in: "query", required: true, schema: { type: "string" }, description: "源路径: 项目名/相对路径" },
-            { name: "dest", in: "query", required: true, schema: { type: "string" }, description: "目标路径: 项目名/相对路径" }
+            { name: "source", in: "query", required: true, schema: { type: "string" }, description: t('srcDesc') },
+            { name: "dest", in: "query", required: true, schema: { type: "string" }, description: t('dstDesc') }
           ],
-          responses: { "200": { description: "复制结果" } }
+          responses: { "200": { description: t('copyDesc2') } }
         }
       },
       "/api/move": {
         get: {
           operationId: "moveFile",
-          summary: "移动或重命名文件/目录",
+          summary: t('moveSummary'),
           parameters: [
-            { name: "source", in: "query", required: true, schema: { type: "string" }, description: "源路径: 项目名/相对路径" },
-            { name: "dest", in: "query", required: true, schema: { type: "string" }, description: "目标路径: 项目名/相对路径" }
+            { name: "source", in: "query", required: true, schema: { type: "string" }, description: t('srcDesc') },
+            { name: "dest", in: "query", required: true, schema: { type: "string" }, description: t('dstDesc') }
           ],
-          responses: { "200": { description: "移动结果" } }
+          responses: { "200": { description: t('moveDesc') } }
         }
       },
       "/api/mkdir": {
         get: {
           operationId: "makeDir",
-          summary: "创建目录（支持多级）",
-          parameters: [{ name: "path", in: "query", required: true, schema: { type: "string" }, description: "路径格式: 项目名/相对路径" }],
-          responses: { "200": { description: "创建结果" } }
+          summary: t('mkdirSummary'),
+          parameters: [{ name: "path", in: "query", required: true, schema: { type: "string" }, description: t('delParamDesc') }],
+          responses: { "200": { description: t('mkdirDesc') } }
         }
       },
       "/api/info": {
         get: {
           operationId: "fileInfo",
-          summary: "获取文件信息（大小、修改时间等）",
-          parameters: [{ name: "path", in: "query", required: true, schema: { type: "string" }, description: "路径格式: 项目名/相对路径" }],
-          responses: { "200": { description: "文件信息" } }
+          summary: t('infoSummary'),
+          parameters: [{ name: "path", in: "query", required: true, schema: { type: "string" }, description: t('delParamDesc') }],
+          responses: { "200": { description: t('infoDesc') } }
         }
       },
       "/api/search": {
         get: {
           operationId: "searchFiles",
-          summary: "按文件名搜索",
+          summary: t('searchSummary'),
           parameters: [
-            { name: "query", in: "query", required: true, schema: { type: "string" }, description: "搜索关键词" },
-            { name: "path", in: "query", schema: { type: "string", default: "." }, description: "路径格式: 项目名/目录，默认搜索全部" }
+            { name: "query", in: "query", required: true, schema: { type: "string" }, description: t('keywordDesc') },
+            { name: "path", in: "query", schema: { type: "string", default: "." }, description: t('searchPathDesc') }
           ],
-          responses: { "200": { description: "搜索结果" } }
+          responses: { "200": { description: t('searchDesc') } }
         }
       },
       "/api/grep": {
         get: {
           operationId: "grepContent",
-          summary: "搜索文件内容（类似 grep）",
+          summary: t('grepSummary'),
           parameters: [
-            { name: "query", in: "query", required: true, schema: { type: "string" }, description: "搜索关键词" },
-            { name: "path", in: "query", schema: { type: "string", default: "." }, description: "路径格式: 项目名/目录，默认搜索全部" },
-            { name: "ext", in: "query", schema: { type: "string" }, description: "文件扩展名过滤，如 .py" }
+            { name: "query", in: "query", required: true, schema: { type: "string" }, description: t('keywordDesc') },
+            { name: "path", in: "query", schema: { type: "string", default: "." }, description: t('searchPathDesc') },
+            { name: "ext", in: "query", schema: { type: "string" }, description: t('grepExtDesc') }
           ],
-          responses: { "200": { description: "搜索结果" } }
+          responses: { "200": { description: t('searchDesc') } }
         }
       },
       "/api/exec": {
         get: {
           operationId: "execCommand",
-          summary: "在项目目录内执行命令",
+          summary: t('execSummary'),
           parameters: [
-            { name: "command", in: "query", required: true, schema: { type: "string" }, description: "要执行的命令" }
+            { name: "command", in: "query", required: true, schema: { type: "string" }, description: t('execParamDesc') }
           ],
-          responses: { "200": { description: "执行结果（stdout/stderr/code）" } }
+          responses: { "200": { description: t('execDesc') } }
         }
       }
     }
@@ -892,7 +1051,7 @@ async function loadOpenAPI() {
 
 function copyOpenAPI() {
   navigator.clipboard.writeText(document.getElementById('openapiSchema').textContent);
-  toast('接口定义已复制');
+  toast(t('apiCopied'));
 }
 
 loadSettings();
