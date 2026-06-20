@@ -1,0 +1,108 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "ChatGPT 本地桥接",
+    "description": "将本地文件系统暴露给 ChatGPT Custom GPT 使用",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "YOUR_NGROK_URL"
+    }
+  ],
+  "paths": {
+    "/api/read": {
+      "get": {
+        "operationId": "readFile",
+        "summary": "读取沙箱中的文件",
+        "parameters": [
+          {
+            "name": "path",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "沙箱内的相对路径"
+          }
+        ],
+        "responses": {
+          "200": { "description": "文件内容" },
+          "404": { "description": "文件不存在" }
+        }
+      }
+    },
+    "/api/write": {
+      "post": {
+        "operationId": "writeFile",
+        "summary": "写入文件到沙箱",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["path", "content"],
+                "properties": {
+                  "path": { "type": "string", "description": "文件相对路径" },
+                  "content": { "type": "string", "description": "文件内容" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "写入成功" }
+        }
+      }
+    },
+    "/api/list": {
+      "get": {
+        "operationId": "listFiles",
+        "summary": "列出目录内容",
+        "parameters": [
+          {
+            "name": "path",
+            "in": "query",
+            "schema": { "type": "string", "default": "." },
+            "description": "目录路径"
+          }
+        ],
+        "responses": {
+          "200": { "description": "文件列表" }
+        }
+      }
+    },
+    "/api/tree": {
+      "get": {
+        "operationId": "getTree",
+        "summary": "获取目录树视图",
+        "parameters": [
+          {
+            "name": "path",
+            "in": "query",
+            "schema": { "type": "string", "default": "." }
+          }
+        ],
+        "responses": {
+          "200": { "description": "目录树" }
+        }
+      }
+    },
+    "/api/delete": {
+      "get": {
+        "operationId": "deleteFile",
+        "summary": "删除文件或目录",
+        "parameters": [
+          {
+            "name": "path",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "删除结果" }
+        }
+      }
+    }
+  }
+}

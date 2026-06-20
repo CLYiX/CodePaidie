@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChatGPT 本地桥接</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif; background: #0f0f0f; color: #e0e0e0; min-height: 100vh; }
+
+.header { background: #1a1a1a; border-bottom: 1px solid #333; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; }
+.header h1 { font-size: 18px; font-weight: 600; color: #fff; }
+.header .status { font-size: 13px; padding: 4px 12px; border-radius: 12px; background: #1a3a1a; color: #4ade80; }
+
+.container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+
+.tabs { display: flex; gap: 0; margin-bottom: 24px; border-bottom: 1px solid #333; }
+.tab { padding: 10px 20px; cursor: pointer; color: #888; border-bottom: 2px solid transparent; transition: all 0.2s; font-size: 14px; }
+.tab:hover { color: #ccc; }
+.tab.active { color: #fff; border-bottom-color: #fff; }
+
+.panel { display: none; }
+.panel.active { display: block; }
+
+.card { background: #1a1a1a; border: 1px solid #333; border-radius: 8px; padding: 20px; margin-bottom: 16px; }
+.card-title { font-size: 14px; font-weight: 600; color: #999; letter-spacing: 0.5px; margin-bottom: 16px; }
+
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; font-size: 13px; color: #888; margin-bottom: 6px; }
+.form-group input, .form-group textarea {
+  width: 100%; padding: 10px 12px; background: #0f0f0f; border: 1px solid #333;
+  border-radius: 6px; color: #fff; font-size: 14px; font-family: inherit;
+}
+.form-group input:focus, .form-group textarea:focus { outline: none; border-color: #555; }
+.form-group .hint { font-size: 12px; color: #666; margin-top: 4px; }
+
+.btn { padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s; }
+.btn-primary { background: #fff; color: #000; }
+.btn-primary:hover { background: #e0e0e0; }
+.btn-danger { background: #3a1a1a; color: #f87171; border: 1px solid #5a2a2a; }
+.btn-danger:hover { background: #4a2020; }
+.btn-sm { padding: 4px 10px; font-size: 12px; }
+.btn-group { display: flex; gap: 8px; }
+
+.api-key-box { display: flex; gap: 8px; align-items: center; }
+.api-key-box input { flex: 1; font-family: monospace; }
+.api-key-box .btn { flex-shrink: 0; }
+
+.file-tree { font-family: monospace; font-size: 13px; line-height: 1.8; }
+.file-tree .dir { color: #60a5fa; cursor: pointer; }
+.file-tree .dir:hover { text-decoration: underline; }
+.file-tree .file { color: #a3a3a3; }
+
+.toast { position: fixed; bottom: 24px; right: 24px; background: #1a3a1a; color: #4ade80; padding: 12px 20px; border-radius: 8px; font-size: 13px; opacity: 0; transition: opacity 0.3s; z-index: 999; }
+.toast.show { opacity: 1; }
+.toast.error { background: #3a1a1a; color: #f87171; }
+
+.openapi-box { background: #0f0f0f; border: 1px solid #333; border-radius: 6px; padding: 16px; }
+.openapi-box pre { font-size: 12px; color: #a3a3a3; white-space: pre-wrap; word-break: break-all; max-height: 300px; overflow-y: auto; }
+.copy-hint { font-size: 12px; color: #666; margin-top: 8px; }
+
+.section-title { font-size: 14px; color: #fff; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.section-title .badge { font-size: 11px; background: #333; color: #999; padding: 2px 8px; border-radius: 10px; }
+.drop-active { border-color: #60a5fa !important; background: rgba(96,165,250,0.05); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>ChatGPT 本地桥接</h1>
+  <span class="status" id="statusBadge">运行中</span>
+</div>
+
+<div class="container">
+  <div class="tabs">
+    <div class="tab active" data-tab="files">文件管理</div>
+    <div class="tab" data-tab="sandboxes">沙箱管理</div>
+    <div class="tab" data-tab="settings">设置</div>
+    <div class="tab" data-tab="openapi">OpenAPI 接口</div>
+    <div class="tab" data-tab="guide">配置教程</div>
+  </div>
+
+  <!-- 文件管理 -->
+  <div class="panel active" id="panel-files">
+    <div class="card">
+      <div class="card-title" style="display:flex; align-items:center; justify-content:space-between;">
+        <span>沙箱文件</span>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <input type="file" id="uploadInput" multiple style="display:none;" onchange="uploadFiles()">
+          <button class="btn btn-sm btn-primary" onclick="document.getElementById('uploadInput').click()">选择上传</button>
+          <span id="uploadPathDisplay" style="color:#666; font-size:12px;">上传到: 根目录</span>
+        </div>
+      </div>
+      <div id="dropZone" style="min-height:200px; border:2px dashed transparent; border-radius:6px; transition: all 0.2s;">
+        <div id="fileBrowser" class="file-tree">加载中...</div>
+      </div>
+      <div id="dropHint" style="display:none; text-align:center; padding:40px; color:#60a5fa; font-size:14px;">松开鼠标上传文件</div>
+    </div>
+  </div>
+
+  <!-- 沙箱管理 -->
+  <div class="panel" id="panel-sandboxes">
+    <div class="card">
+      <div class="card-title">项目管理</div>
+      <div id="sandboxList"></div>
+      <div style="margin-top:12px; display:flex; gap:8px; align-items:center;">
+        <input type="text" id="newSandboxName" placeholder="项目名称" style="width:120px;">
+        <button class="btn btn-sm btn-primary" onclick="openPicker()">选择目录</button>
+        <span id="newSandboxPathDisplay" style="color:#666; font-size:13px; flex:1;">未选择</span>
+        <button class="btn btn-sm btn-primary" onclick="addSandbox()">添加项目</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">互通关系</div>
+      <div class="hint" style="margin-bottom:12px;">勾选的项目之间可以互相读写，未勾选的项目互相隔离</div>
+      <div id="connectionMatrix"></div>
+      <button class="btn btn-primary" style="margin-top:12px;" onclick="saveSandboxes()">保存设置</button>
+    </div>
+  </div>
+
+  <!-- 设置 -->
+  <div class="panel" id="panel-settings">
+    <div class="card">
+      <div class="card-title">网络设置</div>
+      <div class="form-group">
+        <label>公网地址 (ngrok/cloudflared)</label>
+        <input type="text" id="publicUrl" placeholder="https://abc123.ngrok-free.app">
+        <div class="hint">填入 ngrok 或 cloudflared 给你的 HTTPS 地址，用于生成 OpenAPI 接口</div>
+      </div>
+      <div class="form-group" style="display:flex; gap:16px;">
+        <div style="flex:1">
+          <label>ngrok 用户名 (可选，加密码保护)</label>
+          <input type="text" id="ngrokUser" placeholder="留空=不启用">
+        </div>
+        <div style="flex:1">
+          <label>ngrok 密码</label>
+          <input type="password" id="ngrokPass" placeholder="留空=不启用">
+        </div>
+      </div>
+      <div class="hint" style="margin-top:-8px; margin-bottom:16px;">启用后访问隧道地址会弹出浏览器登录框，防止他人访问你的文件</div>
+      <div class="form-group">
+        <label>允许的文件扩展名 (逗号分隔)</label>
+        <input type="text" id="allowedExts" placeholder=".py, .js, .ts, .json, .md">
+        <div style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap;">
+          <button class="btn btn-sm" style="background:#222;color:#aaa;border:1px solid #444;" onclick="setExts('.txt,.md,.doc,.docx,.pdf,.rtf,.odt')">文档</button>
+          <button class="btn btn-sm" style="background:#222;color:#aaa;border:1px solid #444;" onclick="setExts('.csv,.xlsx,.xls,.json,.xml,.yaml,.yml,.toml')">数据</button>
+          <button class="btn btn-sm" style="background:#222;color:#aaa;border:1px solid #444;" onclick="setExts('.png,.jpg,.jpeg,.gif,.svg,.bmp,.webp,.ico')">图片</button>
+          <button class="btn btn-sm" style="background:#222;color:#aaa;border:1px solid #444;" onclick="setExts('')">不限格式</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label style="display:flex; align-items:center; gap:8px;">
+          <input type="checkbox" id="readLimited" onchange="toggleSize('read')" style="width:auto;"> 限制读取大小
+        </label>
+        <div id="readSizeInputs" style="display:flex; gap:6px; margin-top:6px; opacity:0.3;">
+          <input type="number" id="maxReadGB" value="0" min="0" style="width:70px;" placeholder="GB" disabled>
+          <span style="color:#666; line-height:38px;">GB</span>
+          <input type="number" id="maxReadMB" value="10" min="0" style="width:70px;" placeholder="MB" disabled>
+          <span style="color:#666; line-height:38px;">MB</span>
+          <input type="number" id="maxReadKB" value="0" min="0" style="width:70px;" placeholder="KB" disabled>
+          <span style="color:#666; line-height:38px;">KB</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label style="display:flex; align-items:center; gap:8px;">
+          <input type="checkbox" id="writeLimited" onchange="toggleSize('write')" style="width:auto;"> 限制写入大小
+        </label>
+        <div id="writeSizeInputs" style="display:flex; gap:6px; margin-top:6px; opacity:0.3;">
+          <input type="number" id="maxWriteGB" value="0" min="0" style="width:70px;" placeholder="GB" disabled>
+          <span style="color:#666; line-height:38px;">GB</span>
+          <input type="number" id="maxWriteMB" value="10" min="0" style="width:70px;" placeholder="MB" disabled>
+          <span style="color:#666; line-height:38px;">MB</span>
+          <input type="number" id="maxWriteKB" value="0" min="0" style="width:70px;" placeholder="KB" disabled>
+          <span style="color:#666; line-height:38px;">KB</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">API 密钥</div>
+      <div class="api-key-box">
+        <input type="text" id="apiKeyDisplay" readonly>
+        <button class="btn btn-sm btn-primary" onclick="copyKey()">复制</button>
+        <button class="btn btn-sm btn-danger" onclick="regenerateKey()">重新生成</button>
+      </div>
+      <div class="hint" style="margin-top:8px;">在 Custom GPT 的 Actions 认证中使用，Header 名称：<code>X-API-Key</code></div>
+    </div>
+
+    <button class="btn btn-primary" onclick="saveSettings()">保存设置</button>
+  </div>
+
+  <!-- OpenAPI -->
+  <div class="panel" id="panel-openapi">
+    <div class="card">
+      <div class="section-title">OpenAPI 接口定义 <span class="badge">用于 Custom GPT</span></div>
+      <p style="font-size:13px; color:#888; margin-bottom:12px;">复制下面的 JSON，粘贴到 ChatGPT Custom GPT 的 Actions 配置中。</p>
+      <div class="openapi-box">
+        <pre id="openapiSchema">加载中...</pre>
+      </div>
+      <div class="copy-hint">
+        <button class="btn btn-sm btn-primary" onclick="copyOpenAPI()">复制接口定义</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 配置教程 -->
+  <div class="panel" id="panel-guide">
+    <div class="card">
+      <div class="card-title">配置 ChatGPT Custom GPT</div>
+      <ol style="font-size:14px; line-height:2; padding-left:20px; color:#ccc;">
+        <li>启动本服务：<code style="background:#222;padding:2px 6px;border-radius:4px;">python server.py</code></li>
+        <li>启动内网穿透：<code style="background:#222;padding:2px 6px;border-radius:4px;">ngrok http 8000</code></li>
+        <li>复制 ngrok 给的 HTTPS 地址（如 <code style="background:#222;padding:2px 6px;border-radius:4px;">https://abc123.ngrok-free.app</code>）</li>
+        <li>回到本页"设置"，粘贴到"公网地址"栏</li>
+        <li>打开 <a href="https://chatgpt.com/gpts" target="_blank" style="color:#60a5fa;">chatgpt.com/gpts</a> -> 创建 GPT</li>
+        <li>在 <strong>Actions</strong> 部分，点击"创建新 Action"</li>
+        <li>粘贴"OpenAPI 接口"页的 JSON</li>
+        <li>认证方式选 <strong>API Key</strong>，类型选 <strong>Custom</strong>，Header 填 <code style="background:#222;padding:2px 6px;border-radius:4px;">X-API-Key</code></li>
+        <li>粘贴"设置"页的 API 密钥</li>
+        <li>保存，测试！</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <div class="card-title">接口列表</div>
+      <table style="width:100%; font-size:13px; border-collapse:collapse;">
+        <tr style="border-bottom:1px solid #333;">
+          <td style="padding:8px; color:#4ade80; font-family:monospace;">GET /api/read?path=...</td>
+          <td style="padding:8px; color:#888;">读取文件内容</td>
+        </tr>
+        <tr style="border-bottom:1px solid #333;">
+          <td style="padding:8px; color:#60a5fa; font-family:monospace;">POST /api/write</td>
+          <td style="padding:8px; color:#888;">写入文件（请求体：{"path": "...", "content": "..."}）</td>
+        </tr>
+        <tr style="border-bottom:1px solid #333;">
+          <td style="padding:8px; color:#4ade80; font-family:monospace;">GET /api/list?path=.</td>
+          <td style="padding:8px; color:#888;">列出目录内容</td>
+        </tr>
+        <tr style="border-bottom:1px solid #333;">
+          <td style="padding:8px; color:#4ade80; font-family:monospace;">GET /api/tree?path=.</td>
+          <td style="padding:8px; color:#888;">获取目录树视图</td>
+        </tr>
+        <tr style="border-bottom:1px solid #333;">
+          <td style="padding:8px; color:#f87171; font-family:monospace;">GET /api/delete?path=...</td>
+          <td style="padding:8px; color:#888;">删除文件或目录</td>
+        </tr>
+        <tr style="border-bottom:1px solid #333;">
+          <td style="padding:8px; color:#60a5fa; font-family:monospace;">GET /api/copy?source=...&dest=...</td>
+          <td style="padding:8px; color:#888;">复制文件或目录</td>
+        </tr>
+        <tr style="border-bottom:1px solid #333;">
+          <td style="padding:8px; color:#60a5fa; font-family:monospace;">GET /api/move?source=...&dest=...</td>
+          <td style="padding:8px; color:#888;">移动或重命名</td>
+        </tr>
+        <tr style="border-bottom:1px solid #333;">
+          <td style="padding:8px; color:#4ade80; font-family:monospace;">GET /api/mkdir?path=...</td>
+          <td style="padding:8px; color:#888;">创建目录</td>
+        </tr>
+        <tr style="border-bottom:1px solid #333;">
+          <td style="padding:8px; color:#4ade80; font-family:monospace;">GET /api/info?path=...</td>
+          <td style="padding:8px; color:#888;">文件信息（大小、时间等）</td>
+        </tr>
+        <tr style="border-bottom:1px solid #333;">
+          <td style="padding:8px; color:#4ade80; font-family:monospace;">GET /api/search?query=...</td>
+          <td style="padding:8px; color:#888;">按文件名搜索</td>
+        </tr>
+        <tr style="border-bottom:1px solid #333;">
+          <td style="padding:8px; color:#4ade80; font-family:monospace;">GET /api/grep?query=...</td>
+          <td style="padding:8px; color:#888;">搜索文件内容</td>
+        </tr>
+        <tr>
+          <td style="padding:8px; color:#f87171; font-family:monospace;">GET /api/exec?command=...</td>
+          <td style="padding:8px; color:#888;">执行命令（沙箱内）</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- 目录选择弹窗 -->
+<div id="pickerModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:100; align-items:center; justify-content:center;">
+  <div style="background:#1a1a1a; border:1px solid #333; border-radius:8px; width:500px; max-height:70vh; display:flex; flex-direction:column;">
+    <div style="padding:12px 16px; border-bottom:1px solid #333; display:flex; align-items:center; justify-content:space-between;">
+      <span style="font-weight:600; font-size:14px;">选择目录</span>
+      <button class="btn btn-sm" style="background:#333; color:#aaa;" onclick="closePicker()">关闭</button>
+    </div>
+    <div id="pickerPath" style="padding:8px 16px; font-size:12px; color:#666; font-family:monospace; border-bottom:1px solid #222;"></div>
+    <div id="pickerList" style="flex:1; overflow-y:auto; padding:8px 16px; font-size:13px;"></div>
+    <div style="padding:12px 16px; border-top:1px solid #333; display:flex; gap:8px;">
+      <button class="btn btn-sm btn-primary" id="pickerUseBtn" onclick="usePickedDir()" disabled>使用此目录</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '';
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+  });
+});
+
+function toast(msg, error = false) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show' + (error ? ' error' : '');
+  setTimeout(() => el.className = 'toast', 2000);
+}
+
+async function getConfig() {
+  const keyResp = await fetch(API + '/api/key');
+  const keyData = await keyResp.json();
+  const cfgResp = await fetch(API + '/api/config');
+  const cfgData = await cfgResp.json();
+  return { ...cfgData, api_key: keyData.api_key };
+}
+
+function toGBMBKB(bytes) {
+  const gb = Math.floor(bytes / 1073741824);
+  const mb = Math.floor((bytes % 1073741824) / 1048576);
+  const kb = Math.floor((bytes % 1048576) / 1024);
+  return { gb, mb, kb };
+}
+
+function fromGBMBKB() {
+  const rgb = parseInt(document.getElementById('maxReadGB').value) || 0;
+  const rmb = parseInt(document.getElementById('maxReadMB').value) || 0;
+  const rkb = parseInt(document.getElementById('maxReadKB').value) || 0;
+  const wgb = parseInt(document.getElementById('maxWriteGB').value) || 0;
+  const wmb = parseInt(document.getElementById('maxWriteMB').value) || 0;
+  const wkb = parseInt(document.getElementById('maxWriteKB').value) || 0;
+  return {
+    read: rgb * 1073741824 + rmb * 1048576 + rkb * 1024 || 1048576,
+    write: wgb * 1073741824 + wmb * 1048576 + wkb * 1024 || 524288,
+  };
+}
+
+function toggleSize(type) {
+  const checked = document.getElementById(type + 'Limited').checked;
+  document.getElementById(type + 'SizeInputs').style.opacity = checked ? '1' : '0.3';
+  document.getElementById(type + 'SizeInputs').querySelectorAll('input').forEach(i => i.disabled = !checked);
+}
+
+// --- 沙箱管理 ---
+let sandboxData = { sandboxes: [], connections: [] };
+
+async function loadSandboxes() {
+  const resp = await fetch(API + '/api/sandboxes');
+  sandboxData = await resp.json();
+  renderSandboxes();
+}
+
+function renderSandboxes() {
+  const list = document.getElementById('sandboxList');
+  if (!sandboxData.sandboxes.length) {
+    list.innerHTML = '<div style="color:#666; font-size:13px;">暂无项目，添加一个开始</div>';
+    document.getElementById('connectionMatrix').innerHTML = '';
+    return;
+  }
+  list.innerHTML = sandboxData.sandboxes.map((s, i) => {
+    const dirs = (s.dirs || []).map((d, di) => `
+      <div style="display:flex; align-items:center; gap:6px; padding:4px 0 4px 28px; font-size:12px;">
+        <span style="color:#666; font-family:monospace; flex:1;">${escHtml(d)}</span>
+        <button class="btn btn-sm btn-danger" onclick="removeDir(${i},${di})" style="padding:2px 6px;">移除</button>
+      </div>
+    `).join('');
+    return `
+    <div style="padding:8px 0; border-bottom:1px solid #222;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <input type="checkbox" ${s.enabled !== false ? 'checked' : ''} onchange="sandboxData.sandboxes[${i}].enabled=this.checked" style="width:auto;">
+        <span style="font-weight:600; min-width:80px;">${escHtml(s.name)}</span>
+        <button class="btn btn-sm btn-primary" onclick="openPickerForProject(${i})" style="font-size:11px;">+ 添加目录</button>
+        <button class="btn btn-sm btn-danger" onclick="removeProject(${i})" style="margin-left:auto;">删除项目</button>
+      </div>
+      ${dirs}
+    </div>`;
+  }).join('');
+  renderConnections();
+}
+
+function renderConnections() {
+  const names = sandboxData.sandboxes.filter(s => s.enabled).map(s => s.name);
+  if (names.length < 2) {
+    document.getElementById('connectionMatrix').innerHTML = '<div style="color:#666; font-size:13px;">至少需要 2 个启用的沙箱才能设置互通</div>';
+    return;
+  }
+  let html = '<table style="width:100%; font-size:13px; border-collapse:collapse;">';
+  html += '<tr><td></td>' + names.map(n => `<td style="padding:6px; text-align:center; color:#888;">${escHtml(n)}</td>`).join('') + '</tr>';
+  for (let i = 0; i < names.length; i++) {
+    html += `<tr><td style="padding:6px; color:#888;">${escHtml(names[i])}</td>`;
+    for (let j = 0; j < names.length; j++) {
+      if (i === j) {
+        html += '<td style="padding:6px; text-align:center; color:#333;">-</td>';
+      } else {
+        const checked = sandboxData.connections.some(c => c.includes(names[i]) && c.includes(names[j]));
+        const pair = [names[i], names[j]].sort();
+        html += `<td style="padding:6px; text-align:center;"><input type="checkbox" ${checked ? 'checked' : ''} onchange="toggleConnection('${escHtml(pair[0])}','${escHtml(pair[1])}',this.checked)" style="width:auto;"></td>`;
+      }
+    }
+    html += '</tr>';
+  }
+  html += '</table>';
+  document.getElementById('connectionMatrix').innerHTML = html;
+}
+
+function toggleConnection(a, b, checked) {
+  const pair = [a, b].sort();
+  const key = pair.join(":");
+  if (checked) {
+    if (!sandboxData.connections.some(c => c.sort().join(":") === key)) {
+      sandboxData.connections.push(pair);
+    }
+  } else {
+    sandboxData.connections = sandboxData.connections.filter(c => c.sort().join(":") !== key);
+  }
+}
+
+function addSandbox() {
+  const name = document.getElementById('newSandboxName').value.trim();
+  const path = document.getElementById('newSandboxPathDisplay').dataset.path;
+  if (!name) { toast('请填写项目名称', true); return; }
+  if (!path) { toast('请选择一个目录', true); return; }
+  // 查找是否已有同名项目
+  const existing = sandboxData.sandboxes.find(s => s.name === name);
+  if (existing) {
+    if (!existing.dirs.includes(path)) {
+      existing.dirs.push(path);
+      toast('目录已添加到项目 ' + name);
+    } else {
+      toast('该目录已在项目中', true);
+      return;
+    }
+  } else {
+    sandboxData.sandboxes.push({ name, dirs: [path], enabled: true });
+  }
+  document.getElementById('newSandboxName').value = '';
+  document.getElementById('newSandboxPathDisplay').textContent = '未选择';
+  document.getElementById('newSandboxPathDisplay').dataset.path = '';
+  renderSandboxes();
+}
+
+let pickerTargetProject = -1;
+
+function openPickerForProject(idx) {
+  pickerTargetProject = idx;
+  openPicker();
+}
+
+function removeDir(pi, di) {
+  sandboxData.sandboxes[pi].dirs.splice(di, 1);
+  if (sandboxData.sandboxes[pi].dirs.length === 0) {
+    const name = sandboxData.sandboxes[pi].name;
+    sandboxData.sandboxes.splice(pi, 1);
+    sandboxData.connections = sandboxData.connections.filter(c => !c.includes(name));
+  }
+  renderSandboxes();
+}
+
+function removeProject(i) {
+  const name = sandboxData.sandboxes[i].name;
+  sandboxData.sandboxes.splice(i, 1);
+  sandboxData.connections = sandboxData.connections.filter(c => !c.includes(name));
+  renderSandboxes();
+}
+
+async function saveSandboxes() {
+  const resp = await fetch(API + '/api/sandboxes', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(sandboxData),
+  });
+  if (resp.ok) { toast('沙箱设置已保存'); loadFiles(); }
+  else { toast('保存失败', true); }
+}
+
+// --- 目录选择器 ---
+let pickerCurrentPath = '';
+let pickerSelectedPath = '';
+
+async function openPicker(startPath) {
+  document.getElementById('pickerModal').style.display = 'flex';
+  await browseTo(startPath || 'C:\\');
+}
+
+function closePicker() {
+  document.getElementById('pickerModal').style.display = 'none';
+}
+
+document.getElementById('pickerList').addEventListener('click', function(e) {
+  const item = e.target.closest('.picker-item');
+  if (item) browseTo(item.dataset.path);
+});
+
+async function browseTo(path) {
+  const cfg = await getConfig();
+  const resp = await fetch(API + '/api/browse?path=' + encodeURIComponent(path), {
+    headers: { 'X-API-Key': cfg.api_key }
+  });
+  const data = await resp.json();
+  pickerCurrentPath = data.path;
+  document.getElementById('pickerPath').textContent = data.path;
+
+  let html = '';
+  if (data.parent) {
+    html += `<div class="picker-item" data-path="${escHtml(data.parent)}" style="padding:4px 0; cursor:pointer; color:#60a5fa;">..</div>`;
+  }
+  for (const item of data.items) {
+    html += `<div class="picker-item" data-path="${escHtml(item.path)}" style="padding:4px 0; cursor:pointer; color:#a3a3a3;">${escHtml(item.name)}/</div>`;
+  }
+  document.getElementById('pickerList').innerHTML = html || '<div style="color:#666;">空目录或无权限</div>';
+
+  pickerSelectedPath = data.path;
+  document.getElementById('pickerUseBtn').disabled = false;
+}
+
+function usePickedDir() {
+  if (pickerTargetProject >= 0) {
+    const s = sandboxData.sandboxes[pickerTargetProject];
+    if (!s.dirs.includes(pickerSelectedPath)) {
+      s.dirs.push(pickerSelectedPath);
+      toast('目录已添加到 ' + s.name);
+      renderSandboxes();
+    } else {
+      toast('该目录已在项目中', true);
+    }
+    pickerTargetProject = -1;
+  } else {
+    document.getElementById('newSandboxPathDisplay').textContent = pickerSelectedPath;
+    document.getElementById('newSandboxPathDisplay').dataset.path = pickerSelectedPath;
+  }
+  closePicker();
+}
+
+async function loadSettings() {
+  const resp = await fetch(API + '/api/config');
+  const cfg = await resp.json();
+  document.getElementById('publicUrl').value = cfg.public_url || '';
+  document.getElementById('ngrokUser').value = cfg.ngrok_user || '';
+  document.getElementById('ngrokPass').value = cfg.ngrok_pass || '';
+  document.getElementById('allowedExts').value = (cfg.allowed_extensions || []).join(', ');
+
+  const r = toGBMBKB(cfg.max_read_size || 0);
+  document.getElementById('maxReadGB').value = r.gb || '';
+  document.getElementById('maxReadMB').value = r.mb || '';
+  document.getElementById('maxReadKB').value = r.kb || '';
+  document.getElementById('readLimited').checked = (cfg.max_read_size || 0) > 0;
+  toggleSize('read');
+  const w = toGBMBKB(cfg.max_write_size || 0);
+  document.getElementById('maxWriteGB').value = w.gb || '';
+  document.getElementById('maxWriteMB').value = w.mb || '';
+  document.getElementById('maxWriteKB').value = w.kb || '';
+  document.getElementById('writeLimited').checked = (cfg.max_write_size || 0) > 0;
+  toggleSize('write');
+
+  const keyResp = await fetch(API + '/api/key');
+  const keyData = await keyResp.json();
+  document.getElementById('apiKeyDisplay').value = keyData.api_key || '';
+}
+
+async function saveSettings() {
+  const sizes = fromGBMBKB();
+  const body = {
+    public_url: document.getElementById('publicUrl').value,
+    ngrok_user: document.getElementById('ngrokUser').value,
+    ngrok_pass: document.getElementById('ngrokPass').value,
+    allowed_extensions: document.getElementById('allowedExts').value.split(',').map(s => s.trim()).filter(Boolean),
+    max_read_size: document.getElementById('readLimited').checked ? sizes.read : 0,
+    max_write_size: document.getElementById('writeLimited').checked ? sizes.write : 0,
+  };
+  const resp = await fetch(API + '/api/config', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (resp.ok) {
+    toast('设置已保存');
+    loadFiles();
+    loadOpenAPI();
+  } else {
+    toast('保存失败', true);
+  }
+}
+
+async function regenerateKey() {
+  if (!confirm('重新生成 API 密钥？你需要在 Custom GPT 中同步更新。')) return;
+  await fetch(API + '/api/config', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ regenerate_key: true }),
+  });
+  loadSettings();
+  toast('API 密钥已重新生成');
+}
+
+function copyKey() {
+  navigator.clipboard.writeText(document.getElementById('apiKeyDisplay').value);
+  toast('密钥已复制');
+}
+
+// 文件浏览器
+let currentBrowsePath = '.';
+
+const PAGE_SIZE = 200;
+
+async function loadFiles(path = '.', append = false) {
+  currentBrowsePath = path;
+  document.getElementById('uploadPathDisplay').textContent = '上传到: ' + (path === '.' ? '根目录' : path);
+  const browser = document.getElementById('fileBrowser');
+  try {
+    const cfg = await getConfig();
+    const offset = append ? browser.querySelectorAll('.file, .dir').length - (path !== '.' ? 1 : 0) : 0;
+    const resp = await fetch(API + `/api/list?path=${encodeURIComponent(path)}&offset=${offset}&limit=${PAGE_SIZE}`, {
+      headers: { 'X-API-Key': cfg.api_key }
+    });
+    const data = await resp.json();
+    if (data.type === 'dir') {
+      let html = append ? '' : '';
+      if (!append && path !== '.') {
+        const parent = path.split('/').slice(0, -1).join('/') || '.';
+        html += `<div class="dir" onclick="loadFiles('${escHtml(parent)}')">..</div>`;
+      }
+      for (const item of data.items) {
+        if (item.type === 'dir') {
+          html += `<div class="dir" onclick="loadFiles('${escHtml(item.path)}')">[DIR] ${escHtml(item.name)}/</div>`;
+        } else {
+          html += `<div class="file">${escHtml(item.name)} <span style="color:#555">(${formatSize(item.size)})</span></div>`;
+        }
+      }
+      if (append) {
+        // 移除旧的 load-more 按钮，追加新内容
+        const oldBtn = browser.querySelector('.load-more');
+        if (oldBtn) oldBtn.remove();
+        browser.insertAdjacentHTML('beforeend', html);
+      } else {
+        browser.innerHTML = html || '<div style="color:#666">空目录</div>';
+      }
+      // 如果还有更多，显示"加载更多"
+      const loaded = (append ? offset : 0) + data.items.length;
+      if (data.total > loaded) {
+        browser.insertAdjacentHTML('beforeend',
+          `<div class="load-more" style="text-align:center;padding:8px;color:#4ade80;cursor:pointer;" onclick="loadFiles('${escHtml(path)}', true)">加载更多 (${loaded}/${data.total})</div>`);
+      }
+    }
+  } catch (e) {
+    browser.innerHTML = '<div style="color:#f87171">加载失败</div>';
+  }
+}
+
+async function getUploadPrefix() {
+  // 如果当前路径已经是 项目名/xxx 格式，直接用
+  if (currentBrowsePath !== '.' && currentBrowsePath.includes('/')) {
+    return currentBrowsePath.replace(/\/$/, '') + '/';
+  }
+  // 否则从 roots 获取第一个项目名
+  const cfg = await getConfig();
+  const rootsResp = await fetch(API + '/api/roots', { headers: { 'X-API-Key': cfg.api_key } });
+  const rootsData = await rootsResp.json();
+  if (rootsData.roots && rootsData.roots.length) {
+    return rootsData.roots[0].project + '/';
+  }
+  return '';
+}
+
+async function uploadFiles() {
+  const input = document.getElementById('uploadInput');
+  const files = input.files;
+  if (!files.length) return;
+  const cfg = await getConfig();
+  const prefix = await getUploadPrefix();
+  let ok = 0, fail = 0;
+  for (const file of files) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('path', prefix + file.name);
+    const resp = await fetch(API + '/api/upload', {
+      method: 'POST',
+      headers: { 'X-API-Key': cfg.api_key },
+      body: formData,
+    });
+    if (resp.ok) ok++; else fail++;
+  }
+  input.value = '';
+  toast(fail ? `上传完成：${ok} 成功，${fail} 失败` : `上传完成：${ok} 个文件`);
+  loadFiles(currentBrowsePath);
+}
+
+// 拖拽上传
+const dropZone = document.getElementById('dropZone');
+const fileBrowser = document.getElementById('fileBrowser');
+const dropHint = document.getElementById('dropHint');
+
+['dragenter', 'dragover'].forEach(evt => {
+  dropZone.addEventListener(evt, e => {
+    e.preventDefault();
+    e.stopPropagation();
+    dropZone.classList.add('drop-active');
+    fileBrowser.style.display = 'none';
+    dropHint.style.display = 'block';
+  });
+});
+
+['dragleave', 'drop'].forEach(evt => {
+  dropZone.addEventListener(evt, e => {
+    e.preventDefault();
+    e.stopPropagation();
+    dropZone.classList.remove('drop-active');
+    fileBrowser.style.display = '';
+    dropHint.style.display = 'none';
+  });
+});
+
+dropZone.addEventListener('drop', async e => {
+  const files = e.dataTransfer.files;
+  if (!files.length) return;
+  const cfg = await getConfig();
+  const prefix = await getUploadPrefix();
+  let ok = 0, fail = 0;
+  for (const file of files) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('path', prefix + file.name);
+    const resp = await fetch(API + '/api/upload', {
+      method: 'POST',
+      headers: { 'X-API-Key': cfg.api_key },
+      body: formData,
+    });
+    if (resp.ok) ok++; else fail++;
+  }
+  toast(fail ? `上传完成：${ok} 成功，${fail} 失败` : `上传完成：${ok} 个文件`);
+  loadFiles(currentBrowsePath);
+});
+
+function setExts(exts) { document.getElementById('allowedExts').value = exts; }
+function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+function formatSize(b) { if (!b) return ''; if (b < 1024) return b + 'B'; if (b < 1048576) return (b/1024).toFixed(1) + 'KB'; return (b/1048576).toFixed(1) + 'MB'; }
+
+// OpenAPI Schema
+async function loadOpenAPI() {
+  const cfg = await getConfig();
+  const serverUrl = cfg.public_url || 'YOUR_NGROK_URL';
+  const schema = {
+    openapi: "3.1.0",
+    info: {
+      title: "ChatGPT 本地桥接",
+      version: "1.0.0",
+      description: "路径格式: 项目名/相对路径。例如 default/src/main.py。先调 /api/roots 查看可用项目和目录。"
+    },
+    servers: [{ url: serverUrl }],
+    paths: {
+      "/api/roots": {
+        get: {
+          operationId: "getProjectRoots",
+          summary: "获取可用项目和根目录（必须先调此接口了解路径格式）",
+          responses: { "200": { description: "项目列表，每个项目包含 project 名和 dirs 数组" } }
+        }
+      },
+      "/api/save-image": {
+        post: {
+          operationId: "saveImage",
+          summary: "保存 base64 图片到本地。生图后调此接口保存",
+          requestBody: {
+            required: true,
+            content: { "application/json": { schema: { type: "object", properties: { path: { type: "string", description: "路径格式: 项目名/文件名.png" }, image_data: { type: "string", description: "base64 编码的图片数据" } }, required: ["path", "image_data"] } } }
+          },
+          responses: { "200": { description: "保存结果，包含文件大小" } }
+        }
+      },
+      "/api/read": {
+        get: {
+          operationId: "readFile",
+          summary: "读取文件内容",
+          parameters: [{ name: "path", in: "query", required: true, schema: { type: "string" }, description: "路径格式: 项目名/相对路径，如 default/src/main.py" }],
+          responses: { "200": { description: "文件内容" } }
+        }
+      },
+      "/api/write": {
+        post: {
+          operationId: "writeFile",
+          summary: "写入文件",
+          requestBody: {
+            required: true,
+            content: { "application/json": { schema: { type: "object", properties: { path: { type: "string", description: "路径格式: 项目名/相对路径" }, content: { type: "string" } }, required: ["path", "content"] } } }
+          },
+          responses: { "200": { description: "写入结果" } }
+        }
+      },
+      "/api/list": {
+        get: {
+          operationId: "listFiles",
+          summary: "列出目录内容。传 '.' 返回所有项目列表",
+          parameters: [{ name: "path", in: "query", schema: { type: "string", default: "." }, description: "传 '.' 返回项目列表，传 '项目名/' 返回项目下的文件" }],
+          responses: { "200": { description: "文件/目录列表" } }
+        }
+      },
+      "/api/tree": {
+        get: {
+          operationId: "getTree",
+          summary: "获取目录树视图",
+          parameters: [{ name: "path", in: "query", schema: { type: "string", default: "." }, description: "路径格式: 项目名/目录" }],
+          responses: { "200": { description: "目录树" } }
+        }
+      },
+      "/api/delete": {
+        get: {
+          operationId: "deleteFile",
+          summary: "删除文件或目录",
+          parameters: [{ name: "path", in: "query", required: true, schema: { type: "string" }, description: "路径格式: 项目名/相对路径" }],
+          responses: { "200": { description: "删除结果" } }
+        }
+      },
+      "/api/copy": {
+        get: {
+          operationId: "copyFile",
+          summary: "复制文件或目录",
+          parameters: [
+            { name: "source", in: "query", required: true, schema: { type: "string" }, description: "源路径: 项目名/相对路径" },
+            { name: "dest", in: "query", required: true, schema: { type: "string" }, description: "目标路径: 项目名/相对路径" }
+          ],
+          responses: { "200": { description: "复制结果" } }
+        }
+      },
+      "/api/move": {
+        get: {
+          operationId: "moveFile",
+          summary: "移动或重命名文件/目录",
+          parameters: [
+            { name: "source", in: "query", required: true, schema: { type: "string" }, description: "源路径: 项目名/相对路径" },
+            { name: "dest", in: "query", required: true, schema: { type: "string" }, description: "目标路径: 项目名/相对路径" }
+          ],
+          responses: { "200": { description: "移动结果" } }
+        }
+      },
+      "/api/mkdir": {
+        get: {
+          operationId: "makeDir",
+          summary: "创建目录（支持多级）",
+          parameters: [{ name: "path", in: "query", required: true, schema: { type: "string" }, description: "路径格式: 项目名/相对路径" }],
+          responses: { "200": { description: "创建结果" } }
+        }
+      },
+      "/api/info": {
+        get: {
+          operationId: "fileInfo",
+          summary: "获取文件信息（大小、修改时间等）",
+          parameters: [{ name: "path", in: "query", required: true, schema: { type: "string" }, description: "路径格式: 项目名/相对路径" }],
+          responses: { "200": { description: "文件信息" } }
+        }
+      },
+      "/api/search": {
+        get: {
+          operationId: "searchFiles",
+          summary: "按文件名搜索",
+          parameters: [
+            { name: "query", in: "query", required: true, schema: { type: "string" }, description: "搜索关键词" },
+            { name: "path", in: "query", schema: { type: "string", default: "." }, description: "路径格式: 项目名/目录，默认搜索全部" }
+          ],
+          responses: { "200": { description: "搜索结果" } }
+        }
+      },
+      "/api/grep": {
+        get: {
+          operationId: "grepContent",
+          summary: "搜索文件内容（类似 grep）",
+          parameters: [
+            { name: "query", in: "query", required: true, schema: { type: "string" }, description: "搜索关键词" },
+            { name: "path", in: "query", schema: { type: "string", default: "." }, description: "路径格式: 项目名/目录，默认搜索全部" },
+            { name: "ext", in: "query", schema: { type: "string" }, description: "文件扩展名过滤，如 .py" }
+          ],
+          responses: { "200": { description: "搜索结果" } }
+        }
+      },
+      "/api/exec": {
+        get: {
+          operationId: "execCommand",
+          summary: "在项目目录内执行命令",
+          parameters: [
+            { name: "command", in: "query", required: true, schema: { type: "string" }, description: "要执行的命令" }
+          ],
+          responses: { "200": { description: "执行结果（stdout/stderr/code）" } }
+        }
+      }
+    }
+  };
+  document.getElementById('openapiSchema').textContent = JSON.stringify(schema, null, 2);
+}
+
+function copyOpenAPI() {
+  navigator.clipboard.writeText(document.getElementById('openapiSchema').textContent);
+  toast('接口定义已复制');
+}
+
+loadSettings();
+loadFiles();
+loadOpenAPI();
+loadSandboxes();
+</script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+{
+  "projects": [
+    {
+      "name": "myproject",
+      "dirs": [
+        "C:\\path\\to\\myproject"
+      ],
+      "enabled": true
+    }
+  ],
+  "connections": [],
+  "api_key": "GENERATED_ON_FIRST_RUN",
+  "allowed_extensions": [],
+  "max_read_size": 0,
+  "max_write_size": 0,
+  "port": 8000,
+  "public_url": "",
+  "ngrok_user": "",
+  "ngrok_pass": ""
+}
