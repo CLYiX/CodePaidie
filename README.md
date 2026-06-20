@@ -20,8 +20,6 @@ Best suited for platforms where web quota is separate from coding quota (e.g. Ch
 
 ## Origin Story
 
-CodePaidie was not built overnight.
-
 I actually built an earlier version of this project months ago and had been using it privately as my own local AI coding environment. It started as a personal tool: a simple way to let ChatGPT and other AI assistants read, write, search, and work with local project files without depending on Codex, MCP, or any specific paid coding-agent product.
 
 For a while, I planned to keep it that way — just a quiet little tool for myself.
