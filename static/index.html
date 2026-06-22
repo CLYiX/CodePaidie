@@ -295,12 +295,17 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft Ya
         <span class="badge" style="background:#1a3a1a; color:#4ade80; padding:4px 10px; border-radius:12px; font-size:12px;">DeepSeek</span>
       </div>
 
+      <div style="margin-bottom:16px;">
+        <a href="/api/download-extension" download style="display:inline-block; padding:12px 24px; background:#fff; color:#000; border-radius:6px; font-size:14px; font-weight:600; text-decoration:none; cursor:pointer;" data-i18n="extDownload">下载插件 (ZIP)</a>
+        <span style="font-size:12px; color:#666; margin-left:12px;" data-i18n="extDownloadHint">下载后解压，Chrome 加载即可</span>
+      </div>
+
       <div class="card-title" data-i18n="extInstall">安装步骤</div>
       <ol style="font-size:14px; line-height:2; padding-left:20px; color:#ccc;">
         <li data-i18n="extStep1">打开 Chrome，访问 <code style="background:#222;padding:2px 6px;border-radius:4px;">chrome://extensions</code></li>
         <li data-i18n="extStep2">开启右上角「开发者模式」</li>
         <li data-i18n="extStep3">点击「加载已解压的扩展程序」</li>
-        <li data-i18n="extStep4">选择 CodePaidie 项目中的 <code style="background:#222;padding:2px 6px;border-radius:4px;">extension/</code> 文件夹</li>
+        <li data-i18n="extStep4">选择解压后的 <code style="background:#222;padding:2px 6px;border-radius:4px;">extension/</code> 文件夹</li>
         <li data-i18n="extStep5">点击插件图标，填入 Server URL 和 API Key</li>
         <li data-i18n="extStep6">打开任意 AI 网页版，开始使用</li>
       </ol>
@@ -399,6 +404,8 @@ const I18N = {
     extHowDesc: '插件自动注入系统提示词，告诉 AI 你有本地文件操作能力。当 AI 需要读写文件时，输出 <tool_call> 标记。插件拦截标记 → 调用 CodePaidie API → 把结果注入回对话。整个过程对 AI 来说是透明的，就像它天生就有文件操作能力一样。',
     extPromptTitle: '系统提示词 (复制到 Custom Instructions)',
     extCopyPrompt: '复制提示词',
+    extDownload: '下载插件 (ZIP)',
+    extDownloadHint: '下载后解压，Chrome 加载即可',
     writeFile: '写入文件', success: '成功', failed: '失败', files: '个文件',
     apiTitle: 'ChatGPT 本地桥接', apiDesc: '路径格式: 项目名/相对路径。例如 default/src/main.py。先调 /api/roots 查看可用项目和目录。',
     rootsSummary: '获取可用项目和根目录（必须先调此接口了解路径格式）',
@@ -475,6 +482,8 @@ const I18N = {
     extHowDesc: 'The extension injects a system prompt telling the AI it has local file operations. When the AI needs files, it outputs <tool_call> tags. The extension intercepts them → calls CodePaidie API → injects results back. Transparent to the AI — it feels like native capability.',
     extPromptTitle: 'System Prompt (copy to Custom Instructions)',
     extCopyPrompt: 'Copy Prompt',
+    extDownload: 'Download Extension (ZIP)',
+    extDownloadHint: 'Extract after download, then load in Chrome',
     writeFile: 'Write file', success: 'ok', failed: 'failed', files: 'files',
     apiTitle: 'ChatGPT Local Bridge', apiDesc: 'Path format: project_name/relative_path. E.g. default/src/main.py. Call /api/roots first to discover projects.',
     rootsSummary: 'Get available projects and root dirs (call this first to learn the path format)',

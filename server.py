@@ -447,6 +447,30 @@ async def update_sandboxes(request: Request):
             Path(d).mkdir(parents=True, exist_ok=True)
     return {"ok": True}
 
+# --- Extension Download ---
+
+@app.get("/api/download-extension")
+def download_extension():
+    """打包 extension/ 目录为 ZIP 供用户下载"""
+    import zipfile
+    import io
+    from fastapi.responses import StreamingResponse
+    ext_dir = Path(__file__).parent / "extension"
+    if not ext_dir.exists():
+        raise HTTPException(status_code=404, detail="Extension not found")
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as zf:
+        for item in ext_dir.rglob("*"):
+            if item.is_file():
+                arcname = "extension/" + str(item.relative_to(ext_dir))
+                zf.write(item, arcname)
+    buf.seek(0)
+    return StreamingResponse(
+        buf,
+        media_type="application/zip",
+        headers={"Content-Disposition": "attachment; filename=CodePaidie-Extension.zip"}
+    )
+
 if __name__ == "__main__":
     import uvicorn
     cfg = get_config()
