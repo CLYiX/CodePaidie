@@ -1,0 +1,40 @@
+{
+  "manifest_version": 3,
+  "name": "CodePaidie",
+  "description": "Inject local file operations into any AI chat — ChatGPT, Gemini, Kimi, and more.",
+  "version": "2.0.0",
+  "permissions": ["storage", "activeTab"],
+  "host_permissions": ["http://127.0.0.1:8000/*", "http://localhost:8000/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chatgpt.com/*",
+        "https://gemini.google.com/*",
+        "https://kimi.moonshot.cn/*",
+        "https://tongyi.aliyun.com/*",
+        "https://yiyan.baidu.com/*",
+        "https://chat.deepseek.com/*",
+        "https://chat.lmsys.org/*",
+        "https://huggingface.co/chat/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

@@ -40,7 +40,7 @@ Let's build local AI coding tools together. Let's make them cheaper, simpler, mo
 
 |                       |       CodePaidie      |    Codex    |       DevSpace      |
 | --------------------- | :-------------------: | :---------: | :-----------------: |
-| **Platform support**  | Any with tool calling | OpenAI only |    ChatGPT (MCP)    |
+| **Platform support**  | Any (via extension)   | OpenAI only |    ChatGPT (MCP)    |
 | **Subscription**      |        Any tier       |  Pro / API  | Business/Enterprise |
 | **Protocol**          |        REST API       |    Native   |         MCP         |
 | **Setup**             |          Low          |     None    |        Medium       |
@@ -102,6 +102,25 @@ Copy the `https://xxx.ngrok-free.app` URL.
 3. Authentication: **API Key** → **Custom** → Header name: `X-API-Key`
 4. Paste your API key
 5. Save → Test in the GPT
+
+### Alternative: Browser Extension (v2)
+
+Works with **any** AI web chat — no platform Actions needed.
+
+```bash
+# 1. Start CodePaidie server
+python run.py
+
+# 2. In Chrome: chrome://extensions → Developer mode → Load unpacked → select extension/
+
+# 3. Click extension icon → enter Server URL + API Key
+
+# 4. Open ChatGPT / Gemini / Kimi / DeepSeek etc. — start coding
+```
+
+The extension injects a system prompt that gives the AI local file operation capabilities. When the AI needs to read/write files, it outputs `<tool_call>` tags. The extension intercepts them, calls your CodePaidie server, and feeds results back — transparent to the AI.
+
+**Supported platforms:** ChatGPT, Gemini, Kimi, 通义, 文心, DeepSeek, ChatLM, HuggingChat
 
 ## Path Format
 
@@ -187,6 +206,7 @@ Open `http://localhost:8000` for:
 - **Project Management** — Add/remove projects and directories
 - **Settings** — API key, extensions, size limits
 - **OpenAPI Schema** — Copy-paste for Custom GPT setup
+- **Browser Extension** — Install instructions + system prompt for v2
 
 ## Security & Sandbox
 
@@ -233,6 +253,12 @@ CodePaidie/
   openapi.json        # OpenAPI schema backup
   static/
     index.html        # Web UI
+  extension/          # Chrome extension (v2)
+    manifest.json     # Manifest V3
+    background.js     # API calls to CodePaidie server
+    content.js        # Platform detection + tool call injection
+    popup.html/js     # Extension config UI
+    icons/            # Extension icons
 ```
 
 ## Development History
@@ -257,6 +283,10 @@ Extension whitelist, size limits, path traversal protection, removed ngrok basic
 
 All file operations, DALL-E image save, file upload with drag-and-drop, directory picker UI.
 
+### v2.0 — Browser Extension
+
+Chrome extension that injects local file operations into any AI web chat. Works with ChatGPT, Gemini, Kimi, DeepSeek, and more — no platform Actions required. Zero extra API cost.
+
 ## FAQ
 
 **Q: Will this get my account banned?**
@@ -269,14 +299,13 @@ A: MCP support in ChatGPT requires Business/Enterprise/Edu subscriptions. DevSpa
 
 **Q: Which AI platforms are supported?**
 
-A: Any platform that supports custom tool calling / actions / function calling. Tested and confirmed:
+A: Two modes:
 
-- **ChatGPT** — Custom GPT Actions (Plus or higher)
-- **Gemini** — Function calling
-- **Kimi** — Custom tools
-- Any Chinese/international platform with tool support (通义, 文心, DeepSeek, etc.)
+**Mode 1 — Platform-native Actions (v1):** ChatGPT Custom GPT Actions, Gemini function calling, Kimi custom tools, and any platform with external tool support.
 
-If the platform lets you define external APIs for the AI to call, it works with CodePaidie.
+**Mode 2 — Browser Extension (v2):** Any AI web chat. ChatGPT, Gemini, Kimi, 通义, 文心, DeepSeek, ChatLM, HuggingChat — if it has a text input, the extension works.
+
+If the platform lets you define external APIs for the AI to call, it works with CodePaidie. If it doesn't, use the browser extension.
 
 **Q: Are there platforms where this doesn't help?**
 

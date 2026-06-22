@@ -81,6 +81,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft Ya
     <div class="tab" data-tab="settings" data-i18n="settings">设置</div>
     <div class="tab" data-tab="openapi" data-i18n="openapi">OpenAPI 接口</div>
     <div class="tab" data-tab="guide" data-i18n="guide">配置教程</div>
+    <div class="tab" data-tab="extension" data-i18n="extension">浏览器插件</div>
   </div>
 
   <!-- 文件管理 -->
@@ -278,6 +279,53 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft Ya
       </table>
     </div>
   </div>
+
+  <!-- Browser Extension -->
+  <div class="panel" id="panel-extension">
+    <div class="card">
+      <div class="card-title" data-i18n="extTitle">CodePaidie 浏览器插件</div>
+      <p style="font-size:13px; color:#888; margin-bottom:16px;" data-i18n="extDesc">v2: 给任何 AI 网页版注入本地文件操作能力。无需平台支持 Actions，装个插件就能用。</p>
+
+      <div style="display:flex; gap:8px; margin-bottom:16px;">
+        <span class="badge" style="background:#1a3a1a; color:#4ade80; padding:4px 10px; border-radius:12px; font-size:12px;">ChatGPT</span>
+        <span class="badge" style="background:#1a3a1a; color:#4ade80; padding:4px 10px; border-radius:12px; font-size:12px;">Gemini</span>
+        <span class="badge" style="background:#1a3a1a; color:#4ade80; padding:4px 10px; border-radius:12px; font-size:12px;">Kimi</span>
+        <span class="badge" style="background:#1a3a1a; color:#4ade80; padding:4px 10px; border-radius:12px; font-size:12px;">通义</span>
+        <span class="badge" style="background:#1a3a1a; color:#4ade80; padding:4px 10px; border-radius:12px; font-size:12px;">文心</span>
+        <span class="badge" style="background:#1a3a1a; color:#4ade80; padding:4px 10px; border-radius:12px; font-size:12px;">DeepSeek</span>
+      </div>
+
+      <div class="card-title" data-i18n="extInstall">安装步骤</div>
+      <ol style="font-size:14px; line-height:2; padding-left:20px; color:#ccc;">
+        <li data-i18n="extStep1">打开 Chrome，访问 <code style="background:#222;padding:2px 6px;border-radius:4px;">chrome://extensions</code></li>
+        <li data-i18n="extStep2">开启右上角「开发者模式」</li>
+        <li data-i18n="extStep3">点击「加载已解压的扩展程序」</li>
+        <li data-i18n="extStep4">选择 CodePaidie 项目中的 <code style="background:#222;padding:2px 6px;border-radius:4px;">extension/</code> 文件夹</li>
+        <li data-i18n="extStep5">点击插件图标，填入 Server URL 和 API Key</li>
+        <li data-i18n="extStep6">打开任意 AI 网页版，开始使用</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <div class="card-title" data-i18n="extHowTitle">工作原理</div>
+      <p style="font-size:13px; color:#888; line-height:1.8;" data-i18n="extHowDesc">
+        插件自动注入系统提示词，告诉 AI 你有本地文件操作能力。<br>
+        当 AI 需要读写文件时，输出 <code style="background:#222;padding:2px 4px;border-radius:4px;"><tool_call></code> 标记。<br>
+        插件拦截标记 → 调用 CodePaidie API → 把结果注入回对话。<br>
+        整个过程对 AI 来说是透明的，就像它天生就有文件操作能力一样。
+      </p>
+    </div>
+
+    <div class="card">
+      <div class="card-title" data-i18n="extPromptTitle">系统提示词 (复制到 Custom Instructions)</div>
+      <div class="openapi-box">
+        <pre id="extPrompt" style="font-size:12px; max-height:200px;">Loading...</pre>
+      </div>
+      <div class="copy-hint">
+        <button class="btn btn-sm btn-primary" onclick="copyExtPrompt()" data-i18n="extCopyPrompt">复制提示词</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- 目录选择弹窗 -->
@@ -337,6 +385,20 @@ const I18N = {
     saved2: '沙箱设置已保存', pickerTitle: '选择目录', pickerClose: '关闭', pickerUse: '使用此目录',
     emptyDir: '空目录或无权限', dirAddedTo: '目录已添加到 ',
     confirm: '确认', apiCopied: '接口定义已复制',
+    extension: '浏览器插件',
+    extTitle: 'CodePaidie 浏览器插件',
+    extDesc: 'v2: 给任何 AI 网页版注入本地文件操作能力。无需平台支持 Actions，装个插件就能用。',
+    extInstall: '安装步骤',
+    extStep1: '打开 Chrome，访问 chrome://extensions',
+    extStep2: '开启右上角「开发者模式」',
+    extStep3: '点击「加载已解压的扩展程序」',
+    extStep4: '选择 CodePaidie 项目中的 extension/ 文件夹',
+    extStep5: '点击插件图标，填入 Server URL 和 API Key',
+    extStep6: '打开任意 AI 网页版，开始使用',
+    extHowTitle: '工作原理',
+    extHowDesc: '插件自动注入系统提示词，告诉 AI 你有本地文件操作能力。当 AI 需要读写文件时，输出 <tool_call> 标记。插件拦截标记 → 调用 CodePaidie API → 把结果注入回对话。整个过程对 AI 来说是透明的，就像它天生就有文件操作能力一样。',
+    extPromptTitle: '系统提示词 (复制到 Custom Instructions)',
+    extCopyPrompt: '复制提示词',
     writeFile: '写入文件', success: '成功', failed: '失败', files: '个文件',
     apiTitle: 'ChatGPT 本地桥接', apiDesc: '路径格式: 项目名/相对路径。例如 default/src/main.py。先调 /api/roots 查看可用项目和目录。',
     rootsSummary: '获取可用项目和根目录（必须先调此接口了解路径格式）',
@@ -399,6 +461,20 @@ const I18N = {
     saved2: 'Projects saved', pickerTitle: 'Select Directory', pickerClose: 'Close', pickerUse: 'Use this directory',
     emptyDir: 'Empty or no permission', dirAddedTo: 'Directory added to ',
     confirm: 'OK', apiCopied: 'Schema copied',
+    extension: 'Extension',
+    extTitle: 'CodePaidie Browser Extension',
+    extDesc: 'v2: Inject local file operations into any AI web chat. No platform Actions needed — just install the extension.',
+    extInstall: 'Installation',
+    extStep1: 'Open Chrome, go to chrome://extensions',
+    extStep2: 'Enable "Developer mode" (top right)',
+    extStep3: 'Click "Load unpacked"',
+    extStep4: 'Select the extension/ folder from CodePaidie',
+    extStep5: 'Click the extension icon, enter Server URL and API Key',
+    extStep6: 'Open any AI chat website and start using',
+    extHowTitle: 'How It Works',
+    extHowDesc: 'The extension injects a system prompt telling the AI it has local file operations. When the AI needs files, it outputs <tool_call> tags. The extension intercepts them → calls CodePaidie API → injects results back. Transparent to the AI — it feels like native capability.',
+    extPromptTitle: 'System Prompt (copy to Custom Instructions)',
+    extCopyPrompt: 'Copy Prompt',
     writeFile: 'Write file', success: 'ok', failed: 'failed', files: 'files',
     apiTitle: 'ChatGPT Local Bridge', apiDesc: 'Path format: project_name/relative_path. E.g. default/src/main.py. Call /api/roots first to discover projects.',
     rootsSummary: 'Get available projects and root dirs (call this first to learn the path format)',
@@ -453,6 +529,7 @@ function toggleLang() {
   if (typeof renderSandboxes === 'function') renderSandboxes();
   loadFiles(currentBrowsePath);
   loadOpenAPI();
+  loadExtPrompt();
 }
 applyLang();
 
@@ -1054,10 +1131,48 @@ function copyOpenAPI() {
   toast(t('apiCopied'));
 }
 
+// Extension prompt
+const EXT_PROMPT = `You have access to local file operations via tools. When you need to read, write, search, or manage files, output a tool call in this exact format:
+
+<tool_call>
+{"name": "tool_name", "args": {"param": "value"}}
+</tool_call>
+
+Available tools:
+- read_file: Read file. Args: {path}
+- write_file: Write file. Args: {path, content}
+- list_files: List directory. Args: {path}
+- tree: Directory tree. Args: {path}
+- search_files: Search by name. Args: {query, path}
+- grep_content: Search file contents. Args: {query, path, ext}
+- delete_file: Delete file/directory. Args: {path}
+- create_dir: Create directory. Args: {path}
+- file_info: Get file info. Args: {path}
+- exec_command: Execute shell command. Args: {command}
+- get_roots: List available projects. Args: {}
+
+Path format: project_name/relative_path. Example: default/src/main.py
+Call get_roots first to discover available projects.
+
+Rules:
+- Output ONLY the <tool_call> tag when you need file access
+- Do NOT explain the call before making it
+- Wait for the tool result before continuing
+- If a tool call fails, try a different approach`;
+
+function loadExtPrompt() {
+  document.getElementById('extPrompt').textContent = EXT_PROMPT;
+}
+function copyExtPrompt() {
+  navigator.clipboard.writeText(EXT_PROMPT);
+  toast(t('extCopyPrompt') + ' ✓');
+}
+
 loadSettings();
 loadFiles();
 loadOpenAPI();
 loadSandboxes();
+loadExtPrompt();
 </script>
 </body>
 </html>
